@@ -1,0 +1,40 @@
+<!-- Displays text received from the demo extension in a sandboxed preview. @copyright 2026 David Herney - BambuCo; @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Isolated Edy preview</title>
+    <link rel="icon" type="image/png" href="../../src/assets/edy-logo.png">
+    <style>
+      body { margin: 0; padding: 14px; color: #242424; background: #fff; font: 14px/1.5 system-ui, sans-serif; }
+    </style>
+  </head>
+  <body>
+    <p id="preview-message"></p>
+    <p id="preview-content"></p>
+    <script>
+      const translations = {
+        en: 'This document runs in a sandboxed, opaque-origin iframe.',
+        es: 'Este documento se ejecuta en un marco aislado de origen opaco.',
+      };
+      const locale = new URLSearchParams(location.search).get('locale') === 'es' ? 'es' : 'en';
+      document.documentElement.lang = locale;
+      document.querySelector('#preview-message').textContent = translations[locale];
+      window.addEventListener('message', (event) => {
+        const message = event.data;
+        if (event.source !== window.parent || !message || message.type !== 'edy-preview' ||
+            message.operation !== 'update' || typeof message.payload?.text !== 'string' ||
+            message.payload.text.length > 60000) {
+          return;
+        }
+        document.querySelector('#preview-content').textContent = message.payload.text;
+      });
+      window.parent.postMessage({
+        type: 'edy-preview',
+        operation: 'ready',
+        payload: { version: 1 },
+      }, '*');
+    </script>
+  </body>
+</html>

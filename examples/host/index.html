@@ -1,0 +1,36 @@
+<!-- Demonstrates embedding two independent editor instances. @copyright 2026 David Herney - BambuCo; @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Edy — Host integration demo</title>
+    <link rel="icon" type="image/png" href="../../src/assets/edy-logo.png">
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; padding: 18px; font: 14px/1.5 system-ui, sans-serif; }
+      .host-toolbar { display: flex; gap: 8px; margin-bottom: 12px; }
+      .host-editors { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+      .host-editor { width: 100%; height: 80vh; min-height: 900px; }
+      #host-editor-two { height: 60vh; min-height: 420px; }
+      @media (min-width: 1200px) {
+        .host-editors { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        #host-editor-two { height: 80vh; min-height: 900px; }
+      }
+      button { padding: 6px 10px; }
+    </style>
+  </head>
+  <body>
+    <h1>Host integration</h1>
+    <p>These two Edy instances have independent state and styles.</p>
+    <div class="host-toolbar">
+      <button id="toggle-second" type="button">Toggle second instance</button>
+      <button id="dispose-all" type="button">Dispose instances</button>
+    </div>
+    <div class="host-editors">
+      <div id="host-editor-one" class="host-editor"></div>
+      <div id="host-editor-two" class="host-editor"></div>
+    </div>
+    <script type="module" src="./host.js"></script>
+  </body>
+</html>

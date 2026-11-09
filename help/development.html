@@ -1,0 +1,42 @@
+<!doctype html>
+<!-- Generated developer help page. Copyright 2026 David Herney - BambuCo; GPL v3 or later. -->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Development and deployment | Edy documentation</title><link rel="icon" type="image/png" href="../src/assets/edy-logo.png"><link rel="stylesheet" href="./help.css"><script defer src="./help-navigation.js"></script></head>
+<body><header><a href="./index.html"><img src="../src/assets/edy-logo.svg" alt="" width="32" height="32">Edy documentation</a><button type="button" class="menu-toggle" aria-label="Toggle documentation menu" aria-controls="help-navigation" aria-expanded="false" hidden>☰</button></header><div class="layout">
+<nav id="help-navigation" aria-label="Documentation" tabindex="0"><ul><li><a href="index.html">Edy developer documentation</a></li>
+<li><a href="installation.html">Installation and integration</a></li>
+<li><a href="extensions.html">Extensions</a></li>
+<li><a href="preview.html">Live preview</a></li>
+<li><a href="api.html">API reference</a></li>
+<li><a href="development.html" aria-current="page">Development and deployment</a></li></ul></nav>
+<main tabindex="0"><h1>Development and deployment</h1>
+<h2>Commands</h2>
+<p>From the root folder:</p>
+<pre><code class="language-sh">npm install
+npm test
+npm run docs
+npm run build
+</code></pre>
+<p>Edit Markdown in <code>docs/</code>. <code>npm run docs</code> regenerates the HTML site under
+<code>help/</code>; <code>npm run build</code> always regenerates it and copies both directories to
+<code>dist/</code>. Open <code>/help/</code> through the development server. Keep source Markdown
+links relative and use <code>.md</code>; generated internal links point to <code>.html</code>.
+The help navigation follows the links in the <code>Get started</code> list in
+<code>docs/index.md</code>, with the index first. Pages not listed there are appended
+alphabetically. The header and navigation remain visible while the content
+scrolls; on narrow screens a menu button opens the navigation.</p>
+<p>The static build also copies modules, styles, examples and the license to
+<code>dist/</code>, and reports compressed core size in <code>dist/build-report.json</code>.
+Deploy the contents of <code>dist/</code> to a static HTTP server. The examples require
+the same relative layout as the build output.</p>
+<h2>Integration checklist</h2>
+<ul>
+<li>Mount a dedicated container with an explicit size and dispose it on teardown.</li>
+<li>Supply only the host services trusted extensions need.</li>
+<li>Use a separate origin for previews that preserve their origin.</li>
+<li>Test browser support, keyboard shortcuts, translations and accessibility in
+the target application.</li>
+<li>Read <a href="./installation.html">installation</a>, <a href="./extensions.html">extensions</a> and
+<a href="./preview.html">preview security</a> before deploying.</li>
+</ul>
+</main></div></body></html>

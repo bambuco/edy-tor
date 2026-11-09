@@ -1,0 +1,95 @@
+<!doctype html>
+<!-- Generated developer help page. Copyright 2026 David Herney - BambuCo; GPL v3 or later. -->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live preview | Edy documentation</title><link rel="icon" type="image/png" href="../src/assets/edy-logo.png"><link rel="stylesheet" href="./help.css"><script defer src="./help-navigation.js"></script></head>
+<body><header><a href="./index.html"><img src="../src/assets/edy-logo.svg" alt="" width="32" height="32">Edy documentation</a><button type="button" class="menu-toggle" aria-label="Toggle documentation menu" aria-controls="help-navigation" aria-expanded="false" hidden>☰</button></header><div class="layout">
+<nav id="help-navigation" aria-label="Documentation" tabindex="0"><ul><li><a href="index.html">Edy developer documentation</a></li>
+<li><a href="installation.html">Installation and integration</a></li>
+<li><a href="extensions.html">Extensions</a></li>
+<li><a href="preview.html" aria-current="page">Live preview</a></li>
+<li><a href="api.html">API reference</a></li>
+<li><a href="development.html">Development and deployment</a></li></ul></nav>
+<main tabindex="0"><h1>Live preview</h1>
+<p>Register a view with <code>location: &#39;preview&#39;</code> to make the <strong>Split preview</strong> button
+available. It opens a second surface next to the active editor; narrow screens
+stack the two surfaces. Extensions own the document model, preview renderer,
+and synchronization. <code>context.views.open(&#39;preview-id&#39;)</code> opens a registered
+preview programmatically. If several preview views are registered, users can
+select them in the preview pane.
+The editor and preview scroll independently, while editor tabs remain visible.</p>
+<h2>Optional size and scale controls</h2>
+<p>Set <code>viewport</code> on a preview view to let Edy wrap its rendered node in a
+configurable logical viewport. Width and height are CSS pixels; visual zoom
+does not change them. Automatic scaling fits both dimensions into the available
+space without enlarging above 100%. Manual scaling uses a percentage and
+provides scrollbars when the scaled viewport exceeds the space available.
+Size choices are supplied and named by the extension, not by Edy:</p>
+<pre><code class="language-js">context.views.register(&#39;preview&#39;, {
+  title: &#39;Preview&#39;,
+  location: &#39;preview&#39;,
+  viewport: {
+    width: 1024, height: 768, scale: &#39;auto&#39;,
+    minWidth: 200, maxWidth: 4096,
+    minHeight: 100, maxHeight: 4096,
+    minScale: 25, maxScale: 200,
+    presets: [
+      { id: &#39;phone&#39;, label: &#39;Phone&#39;, width: 375, height: 667 },
+      { id: &#39;desktop&#39;, label: &#39;Desktop&#39;, width: 1024, height: 768 },
+    ],
+    onChange: ({ width, height, scale }) =&gt; {
+      console.log(width, height, scale);
+    },
+  },
+  render: () =&gt; createPreviewFrame({
+    src: &#39;/my-preview.html&#39;,
+    title: &#39;Preview&#39;,
+    allowedOrigin: &#39;null&#39;,
+    operations: [],
+  }),
+});
+</code></pre>
+<p><code>width</code>, <code>height</code>, and limits are positive integers. Defaults are 1024 × 768,
+width limits 200–4096, height limits 100–4096 and manual scale limits 25–200%.
+<code>scale</code> is <code>&#39;auto&#39;</code> or an integer percentage within its limits. Preset IDs
+must be unique and dimensions must satisfy the limits. Invalid configuration
+is rejected at registration; UI values outside the limits are rejected.
+<code>onChange</code> runs after user changes and receives the logical dimensions and
+<code>&#39;auto&#39;</code> or the manual percentage; automatic adjustments due to container
+resizing do not fire it. State is independent per view and instance and is
+retained when the preview is closed and reopened while registered.</p>
+<p>Return the preview node directly, or <code>{ element, dispose }</code> as shown below,
+and size its content to fill the viewport. For an iframe, its content viewport
+matches the logical dimensions and responsive CSS can react to changes.
+This does not emulate device pixel ratio, touch input, browser engines or
+other device characteristics. Without <code>viewport</code>, existing views retain their
+original rendering.</p>
+<p>For a sandboxed HTML preview, import <code>createPreviewFrame</code> from <code>src/index.js</code>.
+Use an explicit operation allowlist and validate messages. The included
+<code>demoExtension</code> listens for preview readiness and forwards edited text using
+<code>postMessage</code>. The frame renders text with <code>textContent</code>, never as HTML.</p>
+<pre><code class="language-js">const preview = createPreviewFrame({
+  src: &#39;/my-preview.html&#39;,
+  title: &#39;Preview&#39;,
+  allowedOrigin: &#39;null&#39;,
+  operations: [&#39;ready&#39;, &#39;update&#39;],
+  validateMessage: (message) =&gt; message.operation === &#39;ready&#39;,
+});
+const subscription = preview.onMessage(() =&gt; {
+  preview.postMessage({ operation: &#39;update&#39;, payload: { text: &#39;Hello&#39; } });
+});
+// Return this from a view renderer:
+return {
+  element: preview.element,
+  dispose() {
+    subscription.dispose();
+    preview.dispose();
+  },
+};
+</code></pre>
+<p>The default sandbox has an opaque origin (<code>null</code>); Edy checks the exact frame
+window and allowed message operations. If using <code>allow-same-origin</code>, the
+preview must be served from a different origin and <code>allowedOrigin</code> must match
+its URL. Never send credentials or unrestricted host services into a preview.
+Preview code must validate messages from its parent as well. Limit payload
+sizes and treat all preview content as untrusted.</p>
+</main></div></body></html>

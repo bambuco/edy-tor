@@ -1,0 +1,121 @@
+<!doctype html>
+<!-- Generated developer help page. Copyright 2026 David Herney - BambuCo; GPL v3 or later. -->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>API reference | Edy documentation</title><link rel="icon" type="image/png" href="../src/assets/edy-logo.png"><link rel="stylesheet" href="./help.css"><script defer src="./help-navigation.js"></script></head>
+<body><header><a href="./index.html"><img src="../src/assets/edy-logo.svg" alt="" width="32" height="32">Edy documentation</a><button type="button" class="menu-toggle" aria-label="Toggle documentation menu" aria-controls="help-navigation" aria-expanded="false" hidden>☰</button></header><div class="layout">
+<nav id="help-navigation" aria-label="Documentation" tabindex="0"><ul><li><a href="index.html">Edy developer documentation</a></li>
+<li><a href="installation.html">Installation and integration</a></li>
+<li><a href="extensions.html">Extensions</a></li>
+<li><a href="preview.html">Live preview</a></li>
+<li><a href="api.html" aria-current="page">API reference</a></li>
+<li><a href="development.html">Development and deployment</a></li></ul></nav>
+<main tabindex="0"><h1>API reference</h1>
+<p>Import from <code>src/index.js</code>.</p>
+<h2>createEdy(options)</h2>
+<p><code>container</code> is a host element. Optional <code>locale</code> is <code>en</code> or <code>es</code> (default
+<code>en</code>); <code>theme</code> is <code>light</code>, <code>dark</code>, or <code>system</code> (default <code>system</code>); <code>services</code>
+is a host capability object; and <code>extensions</code> is an array. Instances expose
+async <code>start()</code>, <code>activateExtension(id)</code>, <code>deactivateExtension(id)</code>, and
+<code>dispose()</code>. Expanded mode fills the browser viewport rather than invoking
+native browser fullscreen; Escape restores it.</p>
+<p><code>logo</code> is an optional non-empty image URL string for the header, resolved
+relative to the host page when relative. Each instance can use a different
+logo; if omitted, Edy loads its bundled SVG from <code>src/assets/edy-logo.svg</code>.
+The image is decorative beside the retained Edy text. Its source and licensing
+note are recorded in <code>src/assets/CREDITS.md</code>.</p>
+<h2>Extension context</h2>
+<ul>
+<li><code>commands.register(id, { label, execute, enabled })</code>, <code>execute(id, ...args)</code>,
+<code>refresh()</code>.</li>
+<li><code>views.register(id, { title, location, icon, render, viewport })</code>, <code>open(id)</code>.</li>
+<li><code>documents.open(id, { title, render })</code>, <code>close(id)</code>.</li>
+<li><code>menus.register(menuId, { id, label, commandId, icon, shortcut, order })</code>.
+Built-in groups include <code>file</code>, <code>edit</code>, <code>view</code>, <code>help</code> and <code>context</code>.</li>
+<li><code>status.register(id, { label, tooltip, onClick, commandId })</code>.</li>
+<li><code>notifications.info(message)</code>, <code>success(message)</code>, <code>error(error, message)</code>.</li>
+<li><code>ui.confirm(message)</code> returns a promise of a boolean.</li>
+<li><code>services</code>, <code>subscriptions</code>, <code>locale</code>, <code>translate</code>, <code>extensionId</code>,
+and <code>apiVersion</code>.</li>
+</ul>
+<p>For renderers that attach listeners or own frames, return <code>{ element, dispose }</code>. Edy disposes the contribution when it is unmounted. A closed
+document is removed; closing a sidebar or preview hides the surface.</p>
+<h2>UI helpers</h2>
+<p>Exports include <code>createButton</code>, <code>createLink</code>, <code>createBadge</code>, <code>createMessage</code>,
+<code>createProgress</code>, <code>createSeparator</code>, <code>createForm</code>, <code>createList</code>, <code>createTabs</code>,
+<code>createButtonGroup</code>, <code>createAccordion</code>, <code>openDialog</code>, <code>confirmDialog</code> and
+<code>createPreviewFrame</code>. See the JSDoc in
+<code>src/ui/controls.js</code> for their parameters and <code>src/extensions/demo.js</code> for
+working form, tree and preview examples.</p>
+<p><code>createForm</code> supports native <code>color</code>, <code>date</code>, <code>range</code>, <code>switch</code>, and other
+standard fields, plus the <code>icon</code> and <code>tinymce</code> fields:</p>
+<pre><code class="language-js">createForm({
+  translate: context.translate,
+  onError: (error) =&gt; context.notifications.error(error),
+  fields: [
+    { name: &#39;icon&#39;, label: &#39;Icon&#39;, type: &#39;icon&#39;, value: &#39;star&#39;, options: [
+      { value: &#39;star&#39;, label: &#39;Star&#39;, width: 24, height: 24, path: &#39;M12 2 L15 9 L22 9 L17 14 L19 22 L12 18 L5 22 L7 14 L2 9 L9 9 Z&#39; },
+    ] },
+    { name: &#39;content&#39;, label: &#39;Content&#39;, type: &#39;tinymce&#39;, mode: &#39;simple&#39;, value: &#39;&lt;p&gt;Hello&lt;/p&gt;&#39; },
+  ],
+  onSubmit: ({ icon, content }) =&gt; console.log(icon, content),
+});
+</code></pre>
+<p>Icon options contain a string value and label and an SVG path with its view
+box width and height. The example extension configures a selection from Font
+Awesome Free. The icon field submits the chosen value; TinyMCE submits HTML.
+Treat submitted HTML as untrusted and sanitize it before rendering.</p>
+<p>TinyMCE modes are <code>simple</code> (default), <code>full</code> (general open-source plugins),
+and <code>custom</code>. The simple toolbar includes undo/redo, blocks, bold, italic,
+underline, left/center/right/justified alignment, and clear formatting.
+Pass TinyMCE settings through <code>options</code>, for example
+<code>{ mode: &#39;custom&#39;, options: { plugins: &#39;lists link&#39;, toolbar: &#39;bold | link&#39; } }</code>.
+The field owns <code>target</code>, <code>selector</code>, and <code>readonly</code>. The default license key
+is <code>gpl</code>; the host is responsible for compliance or supplying its own
+<code>license_key</code>. TinyMCE runs in a same-origin iframe to avoid its unsupported
+Shadow DOM integration. The iframe follows the editor&#39;s height when it is
+resized, including by keyboard or automatic resizing. The form rejects submissions until initialization
+finishes; load failures are reported through <code>onError</code> (or <code>console.error</code>).
+TinyMCE&#39;s own interface defaults to English; provide a local language pack
+through its <code>language</code> and <code>language_url</code> options to localize it.
+The static build includes the TinyMCE runtime. When deploying <code>src/</code> directly,
+also deploy <code>node_modules/tinymce/</code> beside it. The example additionally
+requires <code>node_modules/@fortawesome/free-solid-svg-icons/</code>.
+See the packages&#39; license files for their terms and attribution.</p>
+<p><code>createList(items, { tree: true, onSelect })</code> renders a
+keyboard-operable tree with collapsible branches. List and tree items may
+include an optional <code>icon</code> string, rendered decoratively before their label:</p>
+<pre><code class="language-js">createList([
+  { id: &#39;src&#39;, label: &#39;src&#39;, icon: &#39;📁&#39;, children: [
+    { id: &#39;index&#39;, label: &#39;index.html&#39;, icon: &#39;📄&#39; },
+  ] },
+], { tree: true, onSelect: (item) =&gt; console.log(item.id) });
+</code></pre>
+<p><code>openDialog</code> accepts a
+title, DOM content, close label and host container, while <code>createButtonGroup</code>
+groups labeled actions. These controls are demonstrated in the sample
+extension. When the dialog content is a form returned by <code>createForm</code>, its
+close button is placed in the form&#39;s action row next to the form buttons.
+Other dialog content retains a separate close button.</p>
+<p>For example, an extension can render a validated form:</p>
+<pre><code class="language-js">import { createForm } from &#39;./src/index.js&#39;;
+
+// Inside activate(context):
+context.views.register(&#39;settings&#39;, {
+  title: &#39;Settings&#39;,
+  location: &#39;editor&#39;,
+  render: () =&gt; createForm({
+    translate: context.translate,
+    fields: [
+      { name: &#39;title&#39;, label: &#39;Title&#39;, required: true },
+      { name: &#39;enabled&#39;, label: &#39;Enabled&#39;, type: &#39;checkbox&#39;, value: true },
+    ],
+    onSubmit: (values) =&gt; context.notifications.info(values.title),
+  }),
+});
+</code></pre>
+<h2>Preview frame</h2>
+<p><code>createPreviewFrame({ src, title, allowedOrigin, sandbox, operations, validateMessage })</code> returns <code>{ element, postMessage, onMessage, dispose }</code>.
+<code>onMessage</code> returns a disposable subscription. <code>postMessage</code> accepts an object
+with an allowed <code>operation</code> and optional object <code>payload</code>; outgoing messages
+are limited to 64 KiB. See <a href="./preview.html">live preview</a>.</p>
+</main></div></body></html>
