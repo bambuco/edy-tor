@@ -20,6 +20,7 @@ const output = path.join(root, 'dist');
  * @returns {Promise<void>} Build completion.
  */
 async function build() {
+  await promisify(execFile)(process.execPath, [path.join(root, 'scripts/build-editor.mjs')], { cwd: root });
   const { stdout } = await promisify(execFile)(process.execPath, [path.join(root, 'scripts/docs.mjs')], { cwd: root });
   process.stdout.write(stdout);
   await mkdir(output, { recursive: true });

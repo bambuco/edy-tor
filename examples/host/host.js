@@ -7,6 +7,7 @@
 
 import { createEdy } from '../../src/index.js';
 import { demoExtension } from '../../src/extensions/demo.js';
+import { createDemoAssets } from '../assets-demo.js';
 
 /**
  * Creates both sample editors with distinct options and capabilities.
@@ -19,6 +20,7 @@ async function createEditors() {
     theme: 'light',
     services: {
       notifications: Object.freeze({ notify: (message) => console.info(message) }),
+      assets: createDemoAssets('en'),
     },
     extensions: [demoExtension],
   });

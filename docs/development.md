@@ -11,6 +11,13 @@ npm run docs
 npm run build
 ```
 
+`npm start` and `npm run build` bundle the locally installed CodeMirror
+packages and their license notices into `src/ui/codemirror-bundle.js` and
+`src/ui/codemirror-licenses.txt`. Run `npm run build:editor` before serving
+`src/` directly with another server. The static build includes these assets;
+CodeMirror's dependencies are bundled separately from the reported core
+size, and are not fetched from a CDN.
+
 Edit Markdown in `docs/`. `npm run docs` regenerates the HTML site under
 `help/`; `npm run build` always regenerates it and copies both directories to
 `dist/`. Open `/help/` through the development server. Keep source Markdown

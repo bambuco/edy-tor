@@ -62,5 +62,75 @@ changing availability.</p>
 services make activation fail. <code>context.locale</code> and <code>context.translate</code>
 describe the instance language. Translate extension-specific text yourself
 when the core dictionary does not contain it.</p>
+<h2>Host asset picker</h2>
+<p>The <code>asset</code> form field delegates selection to a picker supplied by the
+extension. The recommended host service is <code>services.assets.pick</code>, although
+an extension can provide another adapter. For example:</p>
+<pre><code class="language-js">// Host application, using its own existing asset manager:
+createEdy({
+  container,
+  services: {
+    assets: {
+      async pick(request) {
+        return hostAssetManager.choose(request);
+      },
+      async resolvePreview({ id, signal }) {
+        return hostAssetManager.preview({ id, signal });
+      },
+    },
+  },
+  extensions: [imageTools],
+});
+</code></pre>
+<p>The contract is <code>assets.pick({ accept, multiple, currentValue, signal })</code>:
+<code>accept</code> is a list of MIME types or wildcard patterns, <code>multiple</code> is a
+boolean, and <code>currentValue</code> contains existing asset IDs. <code>signal</code> is an
+<code>AbortSignal</code>; the picker should close its UI and stop work if aborted.
+It resolves to an array of records such as
+<code>[{ id: &#39;asset-42&#39;, name: &#39;Photo&#39;, mimeType: &#39;image/jpeg&#39; }]</code>, or <code>null</code> when
+the user cancels. An empty array represents a confirmed empty selection; for
+single selection it contains at most one record. Failures reject rather than
+being confused with cancellation. The host checks authorization, MIME types,
+and project scope; <code>accept</code> is a selection hint, not a security guarantee.</p>
+<p>Use <code>requires: [&#39;assets&#39;]</code> when the service is mandatory for an extension.
+An extension can alternatively omit the field when the service is absent,
+as the sample extension does. See the <a href="./api.html">API reference</a> for a
+complete <code>createForm</code> example. The standalone and host examples both supply
+<code>createDemoAssets</code> from <code>examples/assets-demo.js</code>: its dialog filters simulated
+records, preselects current IDs, supports single or multiple choice, and
+implements cancellation and abort. It does not read or upload real files.</p>
+<p>Stable IDs are preferable to filesystem paths, temporary signed URLs or
+credentials in saved form values. The optional <code>assets.resolvePreview({ id, signal })</code> resolves a preview on demand, returning <code>null</code> when unavailable or
+<code>{ url, mimeType, dispose? }</code>. The optional synchronous <code>dispose</code> must release
+host-owned resources, including object URLs; Edy calls it even for a result
+arriving after cancellation. A host should create a fresh disposable resource
+per call rather than share a single object URL. For example:</p>
+<pre><code class="language-js">async function resolvePreview({ id, signal }) {
+  // Host checks access and selects a safe representation of the asset.
+  const { blob, mimeType } = await hostAssetManager.getPreview(id, { signal });
+  if (signal.aborted) return null;
+  const url = URL.createObjectURL(blob);
+  return { url, mimeType, dispose: () =&gt; URL.revokeObjectURL(url) };
+}
+</code></pre>
+<p>The host must authorize every request, verify actual contents and serve the
+declared safe representation with the correct Content-Type and
+<code>X-Content-Type-Options: nosniff</code>. Do not use credentials in URLs. Serve
+untrusted documents from a separate origin with restrictive headers, or
+convert them to a safe image; the MIME value alone does not make content
+safe. HTML and SVG are not rendered by the field. Edy&#39;s sandboxed PDF iframe
+depends on browser PDF support and is not a substitute for host-side
+isolation. Preview URLs are never stored as form values.</p>
+<p>An adapter for a CMS, object store, or local asset manager can implement the
+same contract; the provider retains responsibility for upload, permissions,
+and persistence. The example&#39;s images are local illustrations, and its
+simulated picker also displays thumbnails.</p>
+<p>The form always stores an array of IDs, including for single selection.
+<code>allowClear: false</code> hides the form&#39;s clear action; the host must also enforce
+any restriction on confirming an empty selection. The host can route a picker
+to different providers through its adapter. Call <code>form.dispose()</code> when
+permanently unmounting a contribution to abort outstanding requests; stale
+results are ignored even if a provider does not honor the signal. Untrusted
+previews must not receive the service or host credentials.</p>
 <p>See <a href="./preview.html">live preview</a> and <a href="./api.html">API reference</a>.</p>
 </main></div></body></html>

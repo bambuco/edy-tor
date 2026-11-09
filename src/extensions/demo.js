@@ -175,6 +175,20 @@ export const demoExtension = {
               })),
             },
             { name: 'html', label: t('htmlEditor'), type: 'tinymce', mode: 'simple', value: '<p>Hello, Edy!</p>' },
+            { name: 'code', label: t('codeEditor'), type: 'codemirror', language: 'css', value: 'body {\n  color: #286bc1;\n}' },
+            ...(context.services.assets ? [{
+              name: 'asset', label: t('assetExample'), type: 'asset', accept: ['image/*'],
+              pick: (request) => context.services.assets.pick(request),
+              ...(typeof context.services.assets.resolvePreview === 'function'
+                ? { resolvePreview: (request) => context.services.assets.resolvePreview(request) } : {}),
+            }] : []),
+            { type: 'group', label: t('formGroup'), collapsed: true, fields: [
+              { name: 'items', label: t('listExample'), type: 'sortable', value: [t('sampleItem'), t('editorTabs')] },
+              { name: 'rows', label: t('tableExample'), type: 'table', columns: [
+                { name: 'name', label: t('tableColumnName') },
+                { name: 'value', label: t('tableColumnValue') },
+              ], value: [{ name: 'color', value: '#286bc1' }] },
+            ] },
             { name: 'date', label: t('date'), type: 'date' },
             { name: 'range', label: t('range'), type: 'range', min: 0, max: 100, value: 50 },
             {
@@ -194,7 +208,7 @@ export const demoExtension = {
               visibleWhen: { field: 'layout', equals: 'preview' },
             },
           ],
-          onSubmit: (values) => context.notifications.success(`${t('formApplied')} ${t('iconPicker')}: ${values.icon}; ${t('htmlEditor')}: ${values.html}`),
+          onSubmit: (values) => context.notifications.success(`${t('formApplied')} ${t('iconPicker')}: ${values.icon}; ${t('htmlEditor')}: ${values.html}${values.asset ? `; ${t('assetExample')}: ${values.asset.join(', ')}` : ''}`),
           onCancel: () => context.notifications.info(t('cancel')),
         });
         const group = createButtonGroup({
@@ -228,7 +242,7 @@ export const demoExtension = {
           ],
         });
         content.append(heading, group, form);
-        return content;
+        return { element: content, dispose: () => form.dispose() };
       },
     });
     context.views.register('preview', {

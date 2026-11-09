@@ -60,4 +60,87 @@ services make activation fail. `context.locale` and `context.translate`
 describe the instance language. Translate extension-specific text yourself
 when the core dictionary does not contain it.
 
+## Host asset picker
+
+The `asset` form field delegates selection to a picker supplied by the
+extension. The recommended host service is `services.assets.pick`, although
+an extension can provide another adapter. For example:
+
+```js
+// Host application, using its own existing asset manager:
+createEdy({
+  container,
+  services: {
+    assets: {
+      async pick(request) {
+        return hostAssetManager.choose(request);
+      },
+      async resolvePreview({ id, signal }) {
+        return hostAssetManager.preview({ id, signal });
+      },
+    },
+  },
+  extensions: [imageTools],
+});
+```
+
+The contract is `assets.pick({ accept, multiple, currentValue, signal })`:
+`accept` is a list of MIME types or wildcard patterns, `multiple` is a
+boolean, and `currentValue` contains existing asset IDs. `signal` is an
+`AbortSignal`; the picker should close its UI and stop work if aborted.
+It resolves to an array of records such as
+`[{ id: 'asset-42', name: 'Photo', mimeType: 'image/jpeg' }]`, or `null` when
+the user cancels. An empty array represents a confirmed empty selection; for
+single selection it contains at most one record. Failures reject rather than
+being confused with cancellation. The host checks authorization, MIME types,
+and project scope; `accept` is a selection hint, not a security guarantee.
+
+Use `requires: ['assets']` when the service is mandatory for an extension.
+An extension can alternatively omit the field when the service is absent,
+as the sample extension does. See the [API reference](./api.md) for a
+complete `createForm` example. The standalone and host examples both supply
+`createDemoAssets` from `examples/assets-demo.js`: its dialog filters simulated
+records, preselects current IDs, supports single or multiple choice, and
+implements cancellation and abort. It does not read or upload real files.
+
+Stable IDs are preferable to filesystem paths, temporary signed URLs or
+credentials in saved form values. The optional `assets.resolvePreview({ id,
+signal })` resolves a preview on demand, returning `null` when unavailable or
+`{ url, mimeType, dispose? }`. The optional synchronous `dispose` must release
+host-owned resources, including object URLs; Edy calls it even for a result
+arriving after cancellation. A host should create a fresh disposable resource
+per call rather than share a single object URL. For example:
+
+```js
+async function resolvePreview({ id, signal }) {
+  // Host checks access and selects a safe representation of the asset.
+  const { blob, mimeType } = await hostAssetManager.getPreview(id, { signal });
+  if (signal.aborted) return null;
+  const url = URL.createObjectURL(blob);
+  return { url, mimeType, dispose: () => URL.revokeObjectURL(url) };
+}
+```
+
+The host must authorize every request, verify actual contents and serve the
+declared safe representation with the correct Content-Type and
+`X-Content-Type-Options: nosniff`. Do not use credentials in URLs. Serve
+untrusted documents from a separate origin with restrictive headers, or
+convert them to a safe image; the MIME value alone does not make content
+safe. HTML and SVG are not rendered by the field. Edy's sandboxed PDF iframe
+depends on browser PDF support and is not a substitute for host-side
+isolation. Preview URLs are never stored as form values.
+
+An adapter for a CMS, object store, or local asset manager can implement the
+same contract; the provider retains responsibility for upload, permissions,
+and persistence. The example's images are local illustrations, and its
+simulated picker also displays thumbnails.
+
+The form always stores an array of IDs, including for single selection.
+`allowClear: false` hides the form's clear action; the host must also enforce
+any restriction on confirming an empty selection. The host can route a picker
+to different providers through its adapter. Call `form.dispose()` when
+permanently unmounting a contribution to abort outstanding requests; stale
+results are ignored even if a provider does not honor the signal. Untrusted
+previews must not receive the service or host credentials.
+
 See [live preview](./preview.md) and [API reference](./api.md).

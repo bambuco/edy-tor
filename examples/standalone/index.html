@@ -17,11 +17,14 @@
     <script type="module">
       import { createEdy } from '../../src/index.js';
       import { demoExtension } from '../../src/extensions/demo.js';
+      import { createDemoAssets } from '../../examples/assets-demo.js';
 
+      const locale = new URLSearchParams(location.search).get('locale') === 'es' ? 'es' : 'en';
       const editor = createEdy({
         container: document.querySelector('#edy-container'),
-        locale: new URLSearchParams(location.search).get('locale') === 'es' ? 'es' : 'en',
+        locale,
         theme: 'system',
+        services: { assets: createDemoAssets(locale) },
         extensions: [demoExtension],
       });
       await editor.start();

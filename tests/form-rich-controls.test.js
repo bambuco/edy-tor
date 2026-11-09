@@ -83,9 +83,9 @@ test('icon and TinyMCE fields report load errors and submit their values', async
     };
     frame.listeners.load();
     await new Promise((resolve) => setImmediate(resolve));
-    assert.equal(editorOptions.toolbar, 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright alignjustify | removeformat');
+    assert.equal(editorOptions.toolbar, 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist | link | removeformat');
     assert.equal(editorOptions.menubar, false);
-    assert.equal(editorOptions.plugins, '');
+    assert.equal(editorOptions.plugins, 'link lists');
     resize();
     assert.equal(frame.style.height, '302px');
     editorElement.offsetHeight = 540;

@@ -47,7 +47,8 @@ document is removed; closing a sidebar or preview hides the surface.</p>
 <code>src/ui/controls.js</code> for their parameters and <code>src/extensions/demo.js</code> for
 working form, tree and preview examples.</p>
 <p><code>createForm</code> supports native <code>color</code>, <code>date</code>, <code>range</code>, <code>switch</code>, and other
-standard fields, plus the <code>icon</code> and <code>tinymce</code> fields:</p>
+standard fields, plus the <code>icon</code>, <code>tinymce</code>, <code>codemirror</code>, <code>sortable</code>, <code>asset</code>, and
+<code>table</code> fields:</p>
 <pre><code class="language-js">createForm({
   translate: context.translate,
   onError: (error) =&gt; context.notifications.error(error),
@@ -66,7 +67,8 @@ Awesome Free. The icon field submits the chosen value; TinyMCE submits HTML.
 Treat submitted HTML as untrusted and sanitize it before rendering.</p>
 <p>TinyMCE modes are <code>simple</code> (default), <code>full</code> (general open-source plugins),
 and <code>custom</code>. The simple toolbar includes undo/redo, blocks, bold, italic,
-underline, left/center/right/justified alignment, and clear formatting.
+underline, left/center/right/justified alignment, bulleted and numbered lists,
+links, and clear formatting.
 Pass TinyMCE settings through <code>options</code>, for example
 <code>{ mode: &#39;custom&#39;, options: { plugins: &#39;lists link&#39;, toolbar: &#39;bold | link&#39; } }</code>.
 The field owns <code>target</code>, <code>selector</code>, and <code>readonly</code>. The default license key
@@ -81,6 +83,98 @@ The static build includes the TinyMCE runtime. When deploying <code>src/</code> 
 also deploy <code>node_modules/tinymce/</code> beside it. The example additionally
 requires <code>node_modules/@fortawesome/free-solid-svg-icons/</code>.
 See the packages&#39; license files for their terms and attribution.</p>
+<p>Forms can mix fields and optional, independently collapsible groups in their
+<code>fields</code> array. Groups use <code>type: &#39;group&#39;</code>, a <code>label</code>, <code>fields</code>, and optional
+<code>collapsed: true</code>; nested groups are not supported. Group field names share
+the form&#39;s namespace and submit flat values. Collapsing a group does not hide
+its values from validation or submission; a group opens when an invalid field
+inside it needs focus.</p>
+<pre><code class="language-js">createForm({
+  translate: context.translate,
+  fields: [
+    { name: &#39;count&#39;, type: &#39;number&#39;, value: 3 },
+    { type: &#39;group&#39;, label: &#39;Options&#39;, collapsed: true, fields: [
+      { name: &#39;items&#39;, type: &#39;sortable&#39;, label: &#39;Items&#39;,
+        value: [&#39;First&#39;, &#39;Second&#39;], required: true,
+        visibleWhen: { field: &#39;count&#39;, equals: 3 } },
+    ] },
+  ],
+  onSubmit: (values) =&gt; console.log(values),
+});
+</code></pre>
+<p><code>sortable</code> edits an array of strings using add, remove, and move buttons.
+The actions use icons with accessible names. Set <code>editText: false</code> to make
+the item text read-only, and <code>allowAdd: false</code> to hide the add button; both
+default to <code>true</code>. Removal and reordering remain available independently.
+<code>newItem</code> optionally supplies the string for new items (default: <code>&#39;&#39;</code>), which
+is useful when adding is enabled but text editing is disabled.
+Its <code>required</code> validation requires at least one non-blank item; individual
+empty items are otherwise permitted. Its <code>validate</code> callback receives a copy
+of the array. Disabled lists cannot be edited.</p>
+<p><code>codemirror</code> is a local CodeMirror 6 code editor. It accepts <code>language</code>:
+<code>&#39;html&#39;</code> (default), <code>&#39;css&#39;</code>, or <code>&#39;javascript&#39;</code>, and submits a string. It
+supports <code>value</code>, <code>disabled</code>, <code>required</code>, <code>validate</code>, <code>visibleWhen</code>, and form
+groups. The editor runs in a same-origin iframe and is destroyed on unload.
+The form refuses submission while it is loading or if loading fails; errors
+are sent to <code>onError</code>. Code is data, never executed by the control.</p>
+<p><code>table</code> uses declared string-valued columns and an array of row objects:</p>
+<pre><code class="language-js">{ name: &#39;attributes&#39;, label: &#39;Attributes&#39;, type: &#39;table&#39;,
+  columns: [{ name: &#39;key&#39;, label: &#39;Key&#39; }, { name: &#39;value&#39;, label: &#39;Value&#39; }],
+  value: [{ key: &#39;title&#39;, value: &#39;Hello&#39; }], editable: true }
+</code></pre>
+<p>Each row must contain exactly the declared column names and string values.
+With <code>editable: true</code> (the default), cells are editable and rows can be added
+and removed; new cells start empty. <code>editable: false</code> displays fixed rows as
+text with no add or remove actions. <code>disabled</code> disables editable controls.
+<code>required</code> means at least one row; use <code>validate(rows)</code> for cell-level rules.
+Callbacks and submission receive independent copies of the rows. The table
+does not add or remove columns.</p>
+<p><code>asset</code> delegates file selection to a host-provided asynchronous picker:</p>
+<pre><code class="language-js">const form = createForm({
+  translate: context.translate,
+  onError: (error) =&gt; context.notifications.error(error),
+  fields: [{
+    name: &#39;images&#39;, label: &#39;Images&#39;, type: &#39;asset&#39;,
+    multiple: true, accept: [&#39;image/*&#39;], value: [&#39;asset-42&#39;],
+    pick: (request) =&gt; context.services.assets.pick(request),
+    resolvePreview: (request) =&gt; context.services.assets.resolvePreview(request),
+  }],
+  onSubmit: ({ images }) =&gt; console.log(images), // array of IDs
+});
+// When the contribution is permanently removed:
+return { element: form, dispose: () =&gt; form.dispose() };
+</code></pre>
+<p><code>value</code> and the submitted value are always arrays of unique nonempty IDs;
+<code>multiple</code> defaults to <code>false</code> and limits the array to at most one ID.
+<code>accept</code> is an array of MIME types or patterns, and <code>allowClear</code> defaults to
+<code>true</code>. Initial IDs are displayed as IDs until selected through the picker.
+<code>required</code> means at least one selection. While a picker is open, submission is
+blocked; cancellation preserves the current value, while a confirmed empty
+array clears it. Picker failures are reported through <code>onError</code>, preserve the
+selection, and block submission until retried or cleared. An asset field
+hidden by <code>visibleWhen</code> aborts a pending request and is excluded from submission.
+Call <code>form.dispose()</code> on permanent unmount to abort pending asset requests;
+temporary DOM moves do not require disposal. See
+<a href="./extensions.html#host-asset-picker">host asset picker</a> for the service
+contract, cancellation, and host responsibilities.</p>
+<p>The optional <code>resolvePreview({ id, signal })</code> adds a preview button to each
+selected asset, including initial IDs. It resolves to <code>null</code> for an
+unsupported preview or <code>{ url, mimeType, dispose? }</code>, where <code>dispose</code> releases
+resources such as object URLs. Resolution is lazy and does not change form
+values. Closing, changing or hiding the selection, or disposing the form
+aborts pending work and releases any result, including late results from a
+provider that ignores abort. Errors are reported through <code>onError</code> and shown
+in the preview area without blocking form submission.</p>
+<p>Supported preview MIME types are PNG, JPEG, GIF, WebP, AVIF, MPEG/OGG/WAV/WebM/MP4
+audio, MP4/WebM/OGG video, and PDF. Browser codec and PDF-viewer support varies.
+Only HTTP(S) and blob URLs are accepted; URLs containing credentials are
+rejected. HTML and SVG are not rendered. PDFs use a sandboxed iframe and may
+not display in browsers that do not support PDF viewing in sandboxed frames.</p>
+<p><code>visibleWhen</code> accepts <code>{ field, equals }</code> or a function receiving all current
+values. Number and range fields compare numerically when <code>equals</code> is a number;
+empty values never match a number. Submitted number and range values remain
+strings. Hidden fields retain their values, which are still available to
+visibility conditions, but are excluded from validation and submission.</p>
 <p><code>createList(items, { tree: true, onSelect })</code> renders a
 keyboard-operable tree with collapsible branches. List and tree items may
 include an optional <code>icon</code> string, rendered decoratively before their label:</p>
