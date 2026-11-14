@@ -11,6 +11,7 @@ import { DisposableStore, Registry } from './registry.js';
 import { Workbench } from '../workbench/workbench.js';
 import { parseShortcut } from './shortcuts.js';
 import { createAccordion } from '../ui/accordion.js';
+import { resolveIcon } from '../ui/icons.js';
 import { normalizePreviewViewport } from '../ui/preview-viewport.js';
 
 /** @type {WeakMap<HTMLElement, EdyInstance>} */
@@ -337,6 +338,9 @@ export class EdyInstance {
       views: Object.freeze({
         register: (id, view) => {
           validIdentifier(id, 'Views');
+          if (view?.icon !== undefined && resolveIcon(view.icon) === null) {
+            throw new TypeError('View icons must be a non-empty character or Bootstrap icon name.');
+          }
           if (!view || typeof view.title !== 'string' || view.title.trim() === '' ||
               !['primary', 'secondary', 'panel', 'editor', 'preview'].includes(view.location) ||
               (view.render !== undefined && typeof view.render !== 'function') ||
@@ -382,8 +386,8 @@ export class EdyInstance {
           if (typeof item.label !== 'string' || item.label.trim() === '') {
             throw new TypeError('Menu items require a non-empty label.');
           }
-          if (item.icon !== undefined && typeof item.icon !== 'string') {
-            throw new TypeError('Menu item icon must be a string.');
+          if (item.icon !== undefined) {
+            resolveIcon(item.icon);
           }
 
           // Check if item has submenu or commandId
@@ -406,8 +410,8 @@ export class EdyInstance {
             if (typeof subitem.label !== 'string' || subitem.label.trim() === '') {
               throw new TypeError('Submenu items require a non-empty label.');
             }
-            if (subitem.icon !== undefined && typeof subitem.icon !== 'string') {
-              throw new TypeError('Submenu item icon must be a string.');
+            if (subitem.icon !== undefined) {
+              resolveIcon(subitem.icon);
             }
             const subCommandId = typeof subitem.commandId === 'string' && subitem.commandId.trim() !== '';
             if (!subCommandId) {

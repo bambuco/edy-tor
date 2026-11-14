@@ -5,6 +5,8 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+import { createIconElement, resolveIcon } from './icons.js';
+
 /** @type {number} Sequence for unique labels and descriptions. */
 let controlSequence = 0;
 
@@ -1097,8 +1099,8 @@ export function createList(items, { tree = false, onSelect, nested = false } = {
   list.className = 'edy-list';
   list.setAttribute('role', tree ? (nested ? 'group' : 'tree') : 'list');
   for (const item of items) {
-    if (item.icon !== undefined && typeof item.icon !== 'string') {
-      throw new TypeError('List item icons must be strings.');
+    if (item.icon !== undefined && !resolveIcon(item.icon)) {
+      throw new TypeError('List item icons must be a character or Bootstrap icon name.');
     }
     const row = document.createElement('li');
     row.setAttribute('role', tree ? 'none' : 'listitem');
@@ -1114,11 +1116,9 @@ export function createList(items, { tree = false, onSelect, nested = false } = {
       },
     });
     button.classList.add('edy-list__item');
-    if (item.icon) {
-      const icon = document.createElement('span');
-      icon.className = 'edy-list__icon';
-      icon.setAttribute('aria-hidden', 'true');
-      icon.textContent = item.icon;
+    const icon = createIconElement(item.icon);
+    if (icon) {
+      icon.classList.add('edy-list__icon');
       button.prepend(icon);
     }
     if (tree) {

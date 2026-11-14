@@ -19,13 +19,13 @@ export const tools = {
     context.menus.register('edit', {
       id: 'hello',
       label: 'Say hello',
-      icon: '★',
+      icon: 'star',
       shortcut: 'Ctrl+Shift+H',
       commandId: 'hello',
     });
     context.views.register('explorer', {
       title: 'Explorer',
-      icon: '▤',
+      icon: 'folder',
       location: 'primary',
       render: () => document.createTextNode('My project'),
     });
@@ -36,8 +36,12 @@ export const tools = {
 Pass `extensions: [tools]` to `createEdy`. Views use `primary`, `secondary`,
 `panel`, `editor` or `preview` locations. Renderers return a DOM node or
 `{ element, dispose }`. Open a view with `context.views.open('explorer')`.
-Primary activity buttons use the provided short icon, or the title's first
-character if no icon is provided.
+Primary activity buttons use the provided icon, or the title's first
+character if no icon is provided. Icons may use a standard key such as `robot`
+or `card`, a direct Font Awesome class list such as `fa-solid fa-robot`, or a
+single-character glyph. Unknown class lists are passed through without
+validation. The same values are accepted by menu items and accordion actions.
+Only Font Awesome Free styles and icons are included.
 
 Instead of `render`, a primary view may provide `sections`, an array of
 `{ id, title, render, height, collapsed, actions }`. The accordion fills the
@@ -47,7 +51,7 @@ Section renderers return a DOM node or `{ element, dispose }`. Actions use
 `{ icon, label, onClick }` or `{ icon, label, menu: [{ label, onClick }] }`;
 action failures are reported through the editor's notifications.
 
-Menu items may define string `icon` and `shortcut` properties. Shortcuts use
+Menu items may define `icon` and string `shortcut` properties. Shortcuts use
 `Ctrl`, `Alt`, `Shift`, `Meta` and a single character or `F1`–`F12`, for
 example `Ctrl+Shift+H`. A shortcut requires a command and must be unique within
 an instance. It runs only when keyboard focus is inside that editor; browser

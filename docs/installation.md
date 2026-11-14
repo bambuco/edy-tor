@@ -26,8 +26,10 @@ Deploy `src/` and its CSS together on the same origin as your page. From an
 HTML page at the same level as `src/`:
 
 For TinyMCE form fields, also deploy `node_modules/tinymce/` at the same level.
-The static build includes this runtime and the Font Awesome Free package used
-by the sample extension; the TinyMCE iframe and its runtime must be same-origin.
+Font Awesome icons in the activity bar, menus and accordion actions need the
+`node_modules/@fortawesome/fontawesome-free/` package beside `src/`. The static
+build includes this package and the Font Awesome icon definitions used by the
+sample extension; the TinyMCE iframe and its runtime must be same-origin.
 
 ```html
 <div id="editor" style="height: 80vh"></div>

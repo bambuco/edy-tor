@@ -27,7 +27,7 @@ async function build() {
   for (const entry of ['src', 'examples', 'scripts', 'docs', 'help', 'README.md', 'LICENSE', 'package.json', 'package-lock.json']) {
     await cp(path.join(root, entry), path.join(output, entry), { recursive: true });
   }
-  for (const dependency of ['tinymce', '@fortawesome/free-solid-svg-icons']) {
+  for (const dependency of ['tinymce', '@fortawesome/free-solid-svg-icons', '@fortawesome/fontawesome-free']) {
     const destination = path.join(output, 'node_modules', dependency);
     await mkdir(path.dirname(destination), { recursive: true });
     await cp(path.join(root, 'node_modules', dependency), destination, { recursive: true });
@@ -41,6 +41,7 @@ async function build() {
     'src/i18n/messages.js',
     'src/ui/controls.js',
     'src/ui/accordion.js',
+    'src/ui/icons.js',
     'src/ui/preview-viewport.js',
     'src/workbench/workbench.js',
     'src/workbench/styles.css',

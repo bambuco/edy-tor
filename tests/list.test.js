@@ -40,7 +40,7 @@ test('list and tree icons are decorative, optional, and preserve selection data'
     const parent = tree.children[0];
     assert.equal(parent.children[0].attributes['aria-expanded'], 'true');
     assert.equal(parent.children[1].children[0].children[0].children[0].textContent, '◇');
-    assert.throws(() => createList([{ id: 'bad', label: 'Bad', icon: {} }]), /icons must be strings/);
+    assert.throws(() => createList([{ id: 'bad', label: 'Bad', icon: {} }]), /Icons must be a character string/);
   }
   finally {
     globalThis.document = previous;

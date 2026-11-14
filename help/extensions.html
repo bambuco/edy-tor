@@ -26,13 +26,13 @@ the extension and automatically disposed. Add other disposables to
     context.menus.register(&#39;edit&#39;, {
       id: &#39;hello&#39;,
       label: &#39;Say hello&#39;,
-      icon: &#39;★&#39;,
+      icon: &#39;star&#39;,
       shortcut: &#39;Ctrl+Shift+H&#39;,
       commandId: &#39;hello&#39;,
     });
     context.views.register(&#39;explorer&#39;, {
       title: &#39;Explorer&#39;,
-      icon: &#39;▤&#39;,
+      icon: &#39;folder&#39;,
       location: &#39;primary&#39;,
       render: () =&gt; document.createTextNode(&#39;My project&#39;),
     });
@@ -42,8 +42,12 @@ the extension and automatically disposed. Add other disposables to
 <p>Pass <code>extensions: [tools]</code> to <code>createEdy</code>. Views use <code>primary</code>, <code>secondary</code>,
 <code>panel</code>, <code>editor</code> or <code>preview</code> locations. Renderers return a DOM node or
 <code>{ element, dispose }</code>. Open a view with <code>context.views.open(&#39;explorer&#39;)</code>.
-Primary activity buttons use the provided short icon, or the title&#39;s first
-character if no icon is provided.</p>
+Primary activity buttons use the provided icon, or the title&#39;s first
+character if no icon is provided. Icons may use a standard key such as <code>robot</code>
+or <code>card</code>, a direct Font Awesome class list such as <code>fa-solid fa-robot</code>, or a
+single-character glyph. Unknown class lists are passed through without
+validation. The same values are accepted by menu items and accordion actions.
+Only Font Awesome Free styles and icons are included.</p>
 <p>Instead of <code>render</code>, a primary view may provide <code>sections</code>, an array of
 <code>{ id, title, render, height, collapsed, actions }</code>. The accordion fills the
 sidebar, allows each section to collapse, and exposes pointer and keyboard
@@ -51,7 +55,7 @@ resize handles. <code>height</code> is a relative initial size (default <code>1<
 Section renderers return a DOM node or <code>{ element, dispose }</code>. Actions use
 <code>{ icon, label, onClick }</code> or <code>{ icon, label, menu: [{ label, onClick }] }</code>;
 action failures are reported through the editor&#39;s notifications.</p>
-<p>Menu items may define string <code>icon</code> and <code>shortcut</code> properties. Shortcuts use
+<p>Menu items may define <code>icon</code> and string <code>shortcut</code> properties. Shortcuts use
 <code>Ctrl</code>, <code>Alt</code>, <code>Shift</code>, <code>Meta</code> and a single character or <code>F1</code>–<code>F12</code>, for
 example <code>Ctrl+Shift+H</code>. A shortcut requires a command and must be unique within
 an instance. It runs only when keyboard focus is inside that editor; browser

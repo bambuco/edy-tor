@@ -27,8 +27,10 @@ JavaScript MIME type; opening an HTML file directly is not supported.</p>
 <p>Deploy <code>src/</code> and its CSS together on the same origin as your page. From an
 HTML page at the same level as <code>src/</code>:</p>
 <p>For TinyMCE form fields, also deploy <code>node_modules/tinymce/</code> at the same level.
-The static build includes this runtime and the Font Awesome Free package used
-by the sample extension; the TinyMCE iframe and its runtime must be same-origin.</p>
+Font Awesome icons in the activity bar, menus and accordion actions need the
+<code>node_modules/@fortawesome/fontawesome-free/</code> package beside <code>src/</code>. The static
+build includes this package and the Font Awesome icon definitions used by the
+sample extension; the TinyMCE iframe and its runtime must be same-origin.</p>
 <pre><code class="language-html">&lt;div id=&quot;editor&quot; style=&quot;height: 80vh&quot;&gt;&lt;/div&gt;
 &lt;script type=&quot;module&quot;&gt;
   import { createEdy } from &#39;./src/index.js&#39;;

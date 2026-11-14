@@ -5,6 +5,8 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+import { createIconElement, resolveIcon } from './icons.js';
+
 /**
  * Creates an accordion whose sections fill their parent and can be resized.
  * @param {{sections: Array, onError: Function, resizeLabel: string}} options Accordion configuration.
@@ -67,7 +69,7 @@ export function createAccordion({ sections, onError, resizeLabel }) {
     });
     header.append(toggle);
     for (const action of section.actions ?? []) {
-      if (!action || typeof action.icon !== 'string' || !action.icon.trim() ||
+      if (!action || !resolveIcon(action.icon) ||
           typeof action.label !== 'string' || !action.label.trim() ||
           (typeof action.onClick !== 'function' && !Array.isArray(action.menu)) ||
           (action.onClick && action.menu)) {
@@ -78,7 +80,7 @@ export function createAccordion({ sections, onError, resizeLabel }) {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'edy-button';
-      button.textContent = action.icon;
+      button.append(createIconElement(action.icon));
       button.title = action.label;
       button.setAttribute('aria-label', action.label);
       wrapper.append(button);

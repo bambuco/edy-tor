@@ -27,9 +27,13 @@ note are recorded in <code>src/assets/CREDITS.md</code>.</p>
 <ul>
 <li><code>commands.register(id, { label, execute, enabled })</code>, <code>execute(id, ...args)</code>,
 <code>refresh()</code>.</li>
-<li><code>views.register(id, { title, location, icon, render, viewport })</code>, <code>open(id)</code>.</li>
+<li><code>views.register(id, { title, location, icon, render, viewport })</code>, <code>open(id)</code>.
+Activity-bar <code>icon</code> accepts a character, a standard key such as <code>robot</code> or
+<code>card</code>, or direct Font Awesome classes such as <code>fa-solid fa-robot</code>.</li>
 <li><code>documents.open(id, { title, render })</code>, <code>close(id)</code>.</li>
 <li><code>menus.register(menuId, { id, label, commandId, icon, shortcut, order })</code>.
+Menu and accordion <code>icon</code> values use the same aliases or direct Font Awesome
+classes. Unknown class names are passed through without validation.
 Built-in groups include <code>file</code>, <code>edit</code>, <code>view</code>, <code>help</code> and <code>context</code>.</li>
 <li><code>status.register(id, { label, tooltip, onClick, commandId })</code>.</li>
 <li><code>notifications.info(message)</code>, <code>success(message)</code>, <code>error(error, message)</code>.</li>

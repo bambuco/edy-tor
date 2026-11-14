@@ -7,6 +7,7 @@
 
 import { createButton } from '../ui/controls.js';
 import { matchesShortcut, parseShortcut } from '../core/shortcuts.js';
+import { createIconElement } from '../ui/icons.js';
 import { createPreviewViewport } from '../ui/preview-viewport.js';
 
 /**
@@ -52,6 +53,10 @@ export class Workbench {
       }
     };
     this.themeQuery?.addEventListener('change', this.handleThemeChange);
+    const iconStylesheet = document.createElement('link');
+    iconStylesheet.rel = 'stylesheet';
+    iconStylesheet.href = new URL('../../node_modules/@fortawesome/fontawesome-free/css/all.min.css', import.meta.url).href;
+    this.shadow.append(iconStylesheet);
     const stylesheet = document.createElement('link');
     stylesheet.rel = 'stylesheet';
     stylesheet.href = new URL('./styles.css', import.meta.url).href;
@@ -160,15 +165,18 @@ export class Workbench {
     activity.setAttribute('aria-label', translate('activityBar'));
     const activePrimary = this.selectedPrimaryView();
     for (const [id, view] of instance.views.entries().filter(([, item]) => item.location === 'primary')) {
+      const icon = createIconElement(view.icon);
       const button = this.actionButton({
-        label: typeof view.icon === 'string' && view.icon.trim()
-          ? view.icon
-          : Array.from(view.title.trim())[0].toLocaleUpperCase(instance.locale),
+        label: icon ? '' : Array.from(view.title.trim())[0].toLocaleUpperCase(instance.locale),
         action: 'toggle-primary-view',
         id,
         title: view.title,
         pressed: this.primaryVisible && activePrimary === id,
       });
+      if (icon) {
+        button.textContent = '';
+        button.append(icon);
+      }
       button.setAttribute('aria-label', view.title);
       activity.append(button);
     }
@@ -293,6 +301,10 @@ export class Workbench {
       id: parentItem.id,
     });
     button.classList.add('edy-menu__submenu-button');
+    const parentIcon = createIconElement(parentItem.icon);
+    if (parentIcon) {
+      button.prepend(parentIcon);
+    }
     button.setAttribute('role', 'menuitem');
     button.setAttribute('aria-haspopup', 'menu');
     button.setAttribute('aria-expanded', 'false');
@@ -385,11 +397,9 @@ export class Workbench {
     button.setAttribute('role', 'menuitem');
     button.classList.add('edy-menu__item');
     button.textContent = '';
-    if (item.icon) {
-      const icon = document.createElement('span');
-      icon.className = 'edy-menu__icon';
-      icon.setAttribute('aria-hidden', 'true');
-      icon.textContent = item.icon;
+    const icon = createIconElement(item.icon);
+    if (icon) {
+      icon.classList.add('edy-menu__icon');
       button.append(icon);
     }
     const label = document.createElement('span');

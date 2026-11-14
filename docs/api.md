@@ -22,8 +22,12 @@ note are recorded in `src/assets/CREDITS.md`.
 - `commands.register(id, { label, execute, enabled })`, `execute(id, ...args)`,
   `refresh()`.
 - `views.register(id, { title, location, icon, render, viewport })`, `open(id)`.
+  Activity-bar `icon` accepts a character, a standard key such as `robot` or
+  `card`, or direct Font Awesome classes such as `fa-solid fa-robot`.
 - `documents.open(id, { title, render })`, `close(id)`.
 - `menus.register(menuId, { id, label, commandId, icon, shortcut, order })`.
+  Menu and accordion `icon` values use the same aliases or direct Font Awesome
+  classes. Unknown class names are passed through without validation.
   Built-in groups include `file`, `edit`, `view`, `help` and `context`.
 - `status.register(id, { label, tooltip, onClick, commandId })`.
 - `notifications.info(message)`, `success(message)`, `error(error, message)`.

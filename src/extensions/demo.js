@@ -71,7 +71,7 @@ export const demoExtension = {
     });
     context.views.register('explorer', {
       title: t('explorer'),
-      icon: '▤',
+      icon: 'folder',
       location: 'primary',
       sections: [
         {
@@ -79,8 +79,8 @@ export const demoExtension = {
           title: t('files'),
           height: 2,
           actions: [
-            { icon: '+', label: t('newFile'), onClick: () => context.notifications.info(t('sampleAction')) },
-            { icon: '⋯', label: t('moreActions'), menu: [
+            { icon: 'plus', label: t('newFile'), onClick: () => context.notifications.info(t('sampleAction')) },
+            { icon: 'ellipsis', label: t('moreActions'), menu: [
               { label: t('showMessage'), onClick: () => context.ui.confirm(t('sampleAction')) },
             ] },
           ],
@@ -112,7 +112,7 @@ export const demoExtension = {
     });
     context.views.register('quick-access', {
       title: t('quickAccess'),
-      icon: '◇',
+      icon: 'search',
       location: 'primary',
       render: () => createList([
         { id: 'welcome', label: t('welcome') },
@@ -304,8 +304,8 @@ export const demoExtension = {
       id: 'new',
       label: 'Nuevo',
       submenu: [
-        { id: 'new-file', label: 'Archivo', commandId: 'new-file', order: 10 },
-        { id: 'new-folder', label: 'Carpeta', commandId: 'new-folder', order: 20 },
+        { id: 'new-file', label: 'Archivo', commandId: 'new-file', icon: 'file', order: 10 },
+        { id: 'new-folder', label: 'Carpeta', commandId: 'new-folder', icon: 'folder-plus', order: 20 },
       ],
       order: 20,
     });
@@ -313,7 +313,7 @@ export const demoExtension = {
       id: 'greet',
       label: t('sampleCommand'),
       commandId: 'greet',
-      icon: '✦',
+      icon: 'star',
       shortcut: 'Ctrl+Shift+G',
       order: 10,
     });
