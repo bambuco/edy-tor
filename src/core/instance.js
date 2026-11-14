@@ -373,25 +373,63 @@ export class EdyInstance {
         register: (menuId, item) => {
           validIdentifier(menuId, 'Menus');
           validIdentifier(item?.id, 'Menu items');
-          if (typeof item.label !== 'string' || item.label.trim() === '' ||
-              (item.commandId !== undefined &&
-                (typeof item.commandId !== 'string' || item.commandId.trim() === '')) ||
-              (item.icon !== undefined && typeof item.icon !== 'string') ||
-              (menuId === 'context' && !item.commandId)) {
-            throw new TypeError('Menu items require a label, optional string icon, and optional command identifier.');
+
+          // Validate basic properties
+          if (typeof item.label !== 'string' || item.label.trim() === '') {
+            throw new TypeError('Menu items require a non-empty label.');
           }
-          const shortcut = item.shortcut === undefined ? undefined : parseShortcut(item.shortcut);
-          if (shortcut && !item.commandId) {
+          if (item.icon !== undefined && typeof item.icon !== 'string') {
+            throw new TypeError('Menu item icon must be a string.');
+          }
+
+          // Check if item has submenu or commandId
+          const hasSubmenu = Array.isArray(item.submenu) && item.submenu.length > 0;
+          const hasCommandId = typeof item.commandId === 'string' && item.commandId.trim() !== '';
+
+          // An item cannot have both submenu and commandId
+          if (hasSubmenu && hasCommandId) {
+            throw new TypeError('Menu items cannot have both submenu and commandId.');
+          }
+
+          // Context menu items must have a commandId (and cannot have submenu)
+          if (menuId === 'context' && !hasCommandId) {
+            throw new TypeError('Context menu items require a command identifier.');
+          }
+
+          // Validate submenu items if present
+          const processedSubmenu = hasSubmenu ? item.submenu.map((subitem) => {
+            validIdentifier(subitem?.id, 'Submenu items');
+            if (typeof subitem.label !== 'string' || subitem.label.trim() === '') {
+              throw new TypeError('Submenu items require a non-empty label.');
+            }
+            if (subitem.icon !== undefined && typeof subitem.icon !== 'string') {
+              throw new TypeError('Submenu item icon must be a string.');
+            }
+            const subCommandId = typeof subitem.commandId === 'string' && subitem.commandId.trim() !== '';
+            if (!subCommandId) {
+              throw new TypeError('Submenu items require a command identifier.');
+            }
+            return {
+              ...subitem,
+              commandId: publicId(subitem.commandId),
+            };
+          }) : undefined;
+
+          // Process shortcut for main item (only if no submenu)
+          const shortcut = !hasSubmenu && item.shortcut !== undefined ? parseShortcut(item.shortcut) : undefined;
+          if (shortcut && !hasCommandId) {
             throw new TypeError('A menu shortcut requires a command identifier.');
           }
           if (shortcut && this.menus.entries().some(([, registered]) => registered.shortcutKey === shortcut.canonical)) {
             throw new Error(`Shortcut "${item.shortcut}" is already registered.`);
           }
+
           return register(this.menus, `${menuId}:${item.id}`, {
             ...item,
             menuId,
             shortcutKey: shortcut?.canonical,
-            commandId: item.commandId ? publicId(item.commandId) : undefined,
+            commandId: hasCommandId ? publicId(item.commandId) : undefined,
+            submenu: processedSubmenu,
           });
         },
       }),

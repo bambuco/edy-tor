@@ -193,6 +193,49 @@ iframe:focus-visible {
   white-space: nowrap;
 }
 
+.edy-menu__submenu-wrapper {
+  position: relative;
+}
+
+.edy-menu__submenu-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding-right: 24px;
+  position: relative;
+}
+
+.edy-menu__submenu-button::after {
+  content: '▶';
+  position: absolute;
+  right: 6px;
+  opacity: 0.6;
+  font-size: 0.75em;
+  transition: transform 0.15s ease;
+}
+
+.edy-menu__submenu-button[aria-expanded="true"]::after {
+  transform: rotate(90deg);
+}
+
+.edy-menu__submenu-popup {
+  position: absolute;
+  top: -5px;
+  left: calc(100% + 4px);
+  min-width: 200px;
+  padding: 5px;
+  background: var(--edy-color-surface);
+  border: 1px solid var(--edy-color-border);
+  border-radius: 4px;
+  box-shadow: 0 5px 16px #0003;
+  z-index: 5;
+}
+
+.edy-menu__submenu-popup[hidden] {
+  display: none;
+}
+
 .edy-activity {
   grid-column: 1;
   grid-row: 2 / 4;

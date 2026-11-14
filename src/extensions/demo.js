@@ -42,6 +42,15 @@ export const demoExtension = {
       label: t('darkTheme'),
       execute: () => context.notifications.info(`${t('darkTheme')}: set the theme option when creating the instance.`),
     });
+    // Example commands for submenu items
+    context.commands.register('new-file', {
+      label: 'Nuevo archivo',
+      execute: () => context.notifications.success('Nuevo archivo creado'),
+    });
+    context.commands.register('new-folder', {
+      label: 'Nueva carpeta',
+      execute: () => context.notifications.success('Nueva carpeta creada'),
+    });
     context.views.register('welcome', {
       title: t('welcome'),
       location: 'editor',
@@ -289,6 +298,16 @@ export const demoExtension = {
       label: t('openWelcome'),
       commandId: 'show-welcome',
       order: 10,
+    });
+    // Example of a submenu with nested items
+    context.menus.register('file', {
+      id: 'new',
+      label: 'Nuevo',
+      submenu: [
+        { id: 'new-file', label: 'Archivo', commandId: 'new-file', order: 10 },
+        { id: 'new-folder', label: 'Carpeta', commandId: 'new-folder', order: 20 },
+      ],
+      order: 20,
     });
     context.menus.register('edit', {
       id: 'greet',

@@ -265,12 +265,80 @@ export class Workbench {
         menu.className = 'edy-menu__popup';
         menu.setAttribute('role', 'menu');
         for (const item of items.toSorted((a, b) => (a.order ?? 0) - (b.order ?? 0))) {
-          menu.append(this.menuItemButton(item));
+          if (item.submenu && item.submenu.length > 0) {
+            menu.append(this.renderSubmenu(item));
+          } else {
+            menu.append(this.menuItemButton(item));
+          }
         }
         wrapper.append(menu);
       }
       target.append(wrapper);
     }
+  }
+
+  /**
+   * Renders a submenu with nested items.
+   * @param {Object} parentItem Menu item with submenu.
+   * @returns {HTMLElement} Submenu wrapper element.
+   */
+  renderSubmenu(parentItem) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'edy-menu__submenu-wrapper';
+
+    // Button for the submenu parent
+    const button = this.actionButton({
+      label: parentItem.label,
+      action: 'toggle-submenu',
+      id: parentItem.id,
+    });
+    button.classList.add('edy-menu__submenu-button');
+    button.setAttribute('role', 'menuitem');
+    button.setAttribute('aria-haspopup', 'menu');
+    button.setAttribute('aria-expanded', 'false');
+
+    // Container for submenu items
+    const submenu = document.createElement('div');
+    submenu.className = 'edy-menu__submenu-popup';
+    submenu.setAttribute('role', 'menu');
+    submenu.hidden = true;
+
+    // Render submenu items
+    for (const subitem of parentItem.submenu) {
+      const subitemButton = this.menuItemButton(subitem);
+      // Add click listener to close submenu and parent menu when item is executed
+      subitemButton.addEventListener('click', () => {
+        submenu.hidden = true;
+        button.setAttribute('aria-expanded', 'false');
+        // Close parent menu after a short delay to allow command execution
+        setTimeout(() => {
+          this.openMenu = null;
+          this.refreshMenuSurfaces();
+        }, 0);
+      });
+      submenu.append(subitemButton);
+    }
+
+    // Handle submenu toggle
+    button.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isHidden = submenu.hidden;
+      submenu.hidden = !isHidden;
+      button.setAttribute('aria-expanded', !isHidden);
+    });
+
+    // Close submenu on Escape key
+    const handleKeydown = (e) => {
+      if (e.key === 'Escape') {
+        submenu.hidden = true;
+        button.setAttribute('aria-expanded', 'false');
+        e.stopPropagation();
+      }
+    };
+    wrapper.addEventListener('keydown', handleKeydown);
+
+    wrapper.append(button, submenu);
+    return wrapper;
   }
 
   /**
