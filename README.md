@@ -58,6 +58,7 @@ const editor = createEdy({
   locale: 'en',
   theme: 'system',
   logo: '/images/my-editor-logo.svg', // Optional; omit to use the bundled Edy logo.
+  title: 'My Editor', // Optional; omit to use the default "Edy" title.
   services: {},
   extensions: [demoExtension],
 });
@@ -72,7 +73,7 @@ Use separate container elements for multiple instances. A container must not
 already have a shadow root. Supported locale values are `en` and `es`; themes
 are `light`, `dark`, and `system`. Once `dispose()` resolves, the same host
 element can be mounted again with a new instance.
-The optional `logo` image URL is resolved relative to the host page and can
+The optional `logo` image URL and `title` string are resolved at runtime and can
 be different for each instance. Keep `src/assets/` when deploying the default
 logo; its source and licensing note are in [image credits](./src/assets/CREDITS.md).
 

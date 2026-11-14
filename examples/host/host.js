@@ -18,6 +18,7 @@ async function createEditors() {
     container: document.querySelector('#host-editor-one'),
     locale: 'en',
     theme: 'light',
+    title: 'English Editor',  // Custom title example
     services: {
       notifications: Object.freeze({ notify: (message) => console.info(message) }),
       assets: createDemoAssets('en'),
@@ -28,6 +29,7 @@ async function createEditors() {
     container: document.querySelector('#host-editor-two'),
     locale: 'es',
     theme: 'dark',
+    title: 'Editor en Español',  // Custom title example
     extensions: [],
   });
   await Promise.all([first.start(), second.start()]);

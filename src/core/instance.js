@@ -20,7 +20,7 @@ const reusableRoots = new WeakMap();
 
 /**
  * Creates an independently configured Edy workbench.
- * @param {{container: HTMLElement, locale?: string, theme?: string, logo?: string, services?: Object, extensions?: Array}} options Instance options.
+ * @param {{container: HTMLElement, locale?: string, theme?: string, logo?: string, title?: string, services?: Object, extensions?: Array}} options Instance options.
  * @returns {EdyInstance} Edy instance.
  */
 export function createEdy(options) {
@@ -46,10 +46,10 @@ export function createEdy(options) {
  */
 export class EdyInstance {
   /**
-   * @param {{container: HTMLElement, locale?: string, theme?: string, logo?: string, services?: Object, extensions?: Array}} options Instance options.
+   * @param {{container: HTMLElement, locale?: string, theme?: string, logo?: string, title?: string, services?: Object, extensions?: Array}} options Instance options.
    * @param {ShadowRoot} [existingRoot] Previously disposed Edy root.
    */
-  constructor({ container, locale = 'en', theme = 'system', logo = new URL('../assets/edy-logo.svg', import.meta.url).href, services = {}, extensions = [] }, existingRoot) {
+  constructor({ container, locale = 'en', theme = 'system', logo = new URL('../assets/edy-logo.svg', import.meta.url).href, title = 'Edy', services = {}, extensions = [] }, existingRoot) {
     if (!Array.isArray(extensions)) {
       throw new TypeError('Extensions must be provided as an array.');
     }
@@ -61,6 +61,9 @@ export class EdyInstance {
     }
     if (typeof logo !== 'string' || !logo.trim()) {
       throw new TypeError('The logo must be a non-empty image URL string.');
+    }
+    if (typeof title !== 'string' || !title.trim()) {
+      throw new TypeError('The title must be a non-empty string.');
     }
     if (!services || typeof services !== 'object' || Array.isArray(services)) {
       throw new TypeError('Host services must be provided as an object.');
@@ -80,6 +83,7 @@ export class EdyInstance {
     this.translate = createTranslator(this.locale);
     this.theme = theme;
     this.logo = logo;
+    this.title = title;
     this.services = Object.freeze({ ...services });
     this.extensions = [...extensions];
     this.extensionStates = new Map();

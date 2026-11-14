@@ -122,7 +122,7 @@ export class Workbench {
 
     const header = document.createElement('header');
     header.className = 'edy-header';
-    header.innerHTML = `<strong class="edy-brand">Edy</strong><nav class="edy-menubar" aria-label="${translate('menusLabel')}"></nav><div class="edy-header__spacer"></div>`;
+    header.innerHTML = `<strong class="edy-brand">${instance.title}</strong><nav class="edy-menubar" aria-label="${translate('menusLabel')}"></nav><div class="edy-header__spacer"></div>`;
     const logo = document.createElement('img');
     logo.className = 'edy-brand__logo';
     logo.alt = '';
