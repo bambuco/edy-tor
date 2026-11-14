@@ -697,12 +697,18 @@ export function createForm({ fields, onSubmit, onCancel, translate, onError = co
       const legend = document.createElement('legend');
       legend.textContent = field.label ?? translate(field.name);
       wrapper.append(legend);
+      const optionContainer = field.type === 'icon' ? document.createElement('div') : wrapper;
+      if (field.type === 'icon') {
+        optionContainer.className = 'edy-form__icon-options';
+      }
       for (const [index, option] of (field.options ?? []).entries()) {
         if (field.type === 'icon' && (typeof option.value !== 'string' ||
-            typeof option.label !== 'string' || typeof option.path !== 'string' ||
-            !Number.isFinite(option.width) || !Number.isFinite(option.height) ||
-            option.width <= 0 || option.height <= 0)) {
-          throw new TypeError('Icon options require value, label, SVG path, width and height.');
+            typeof option.label !== 'string' || !option.label.trim())) {
+          throw new TypeError('Icon options require a string value and non-empty label.');
+        }
+        const icon = field.type === 'icon' ? createIconElement(option.value) : null;
+        if (field.type === 'icon' && !icon) {
+          throw new TypeError('Icon options require a non-empty icon value.');
         }
         const label = document.createElement('label');
         const radio = document.createElement('input');
@@ -715,18 +721,21 @@ export function createForm({ fields, onSubmit, onCancel, translate, onError = co
         radio.required = Boolean(field.required);
         label.htmlFor = radio.id;
         label.append(radio);
-        if (field.type === 'icon') {
-          const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-          svg.setAttribute('viewBox', `0 0 ${option.width} ${option.height}`);
-          svg.setAttribute('aria-hidden', 'true');
-          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          path.setAttribute('d', option.path);
-          svg.append(path);
-          label.append(svg);
+        if (icon) {
+          icon.classList.add('edy-form__icon-preview');
+          label.append(icon);
         }
-        label.append(document.createTextNode(option.label));
-        wrapper.append(label);
+        const optionLabel = field.type === 'icon' ? document.createElement('span') : document.createTextNode(option.label);
+        if (field.type === 'icon') {
+          optionLabel.className = 'edy-form__icon-label';
+          optionLabel.textContent = option.label;
+        }
+        label.append(optionLabel);
+        optionContainer.append(label);
         inputs.push(radio);
+      }
+      if (field.type === 'icon') {
+        wrapper.append(optionContainer);
       }
       input = inputs[0];
       if (!input) {

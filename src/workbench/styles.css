@@ -739,6 +739,52 @@ iframe:focus-visible {
   display: block;
 }
 
+.edy-form__icon-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 4px;
+  max-height: 240px;
+  padding: 5px;
+  overflow: auto;
+  border: 1px solid var(--edy-color-border);
+}
+
+.edy-form__field--icon label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 5px;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.edy-form__field--icon label:has(input:checked) {
+  border-color: var(--edy-color-accent);
+  background: color-mix(in srgb, var(--edy-color-accent) 12%, transparent);
+}
+
+.edy-form__field--icon label:focus-within {
+  outline: 2px solid var(--edy-color-accent);
+  outline-offset: 1px;
+}
+
+.edy-form__icon-preview {
+  width: 18px;
+  height: 18px;
+}
+
+.edy-form__icon-label {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .edy-form__field[hidden] {
   display: none;
 }
@@ -822,21 +868,8 @@ iframe:focus-visible {
   border: 1px solid var(--edy-color-border);
 }
 
-.edy-form__field--icon label {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin: 4px;
-}
-
 .edy-form__field--icon input[type="radio"] {
   width: auto;
-}
-
-.edy-form__field--icon svg {
-  width: 18px;
-  height: 18px;
-  fill: currentColor;
 }
 
 .edy-form__editor-frame {

@@ -7,7 +7,7 @@
 
 import { createButton } from '../ui/controls.js';
 import { matchesShortcut, parseShortcut } from '../core/shortcuts.js';
-import { createIconElement } from '../ui/icons.js';
+import { createIconElement, loadIconStylesheet } from '../ui/icons.js';
 import { createPreviewViewport } from '../ui/preview-viewport.js';
 
 /**
@@ -53,10 +53,7 @@ export class Workbench {
       }
     };
     this.themeQuery?.addEventListener('change', this.handleThemeChange);
-    const iconStylesheet = document.createElement('link');
-    iconStylesheet.rel = 'stylesheet';
-    iconStylesheet.href = new URL('../../node_modules/@fortawesome/fontawesome-free/css/all.min.css', import.meta.url).href;
-    this.shadow.append(iconStylesheet);
+    loadIconStylesheet(this.shadow);
     const stylesheet = document.createElement('link');
     stylesheet.rel = 'stylesheet';
     stylesheet.href = new URL('./styles.css', import.meta.url).href;

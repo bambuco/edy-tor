@@ -44,12 +44,16 @@ and <code>apiVersion</code>.</li>
 <p>For renderers that attach listeners or own frames, return <code>{ element, dispose }</code>. Edy disposes the contribution when it is unmounted. A closed
 document is removed; closing a sidebar or preview hides the surface.</p>
 <h2>UI helpers</h2>
-<p>Exports include <code>createButton</code>, <code>createLink</code>, <code>createBadge</code>, <code>createMessage</code>,
+<p>Exports include <code>createIconElement</code>, <code>iconAliases</code>, <code>loadIconStylesheet</code>,
+<code>createButton</code>, <code>createLink</code>, <code>createBadge</code>, <code>createMessage</code>,
 <code>createProgress</code>, <code>createSeparator</code>, <code>createForm</code>, <code>createList</code>, <code>createTabs</code>,
 <code>createButtonGroup</code>, <code>createAccordion</code>, <code>openDialog</code>, <code>confirmDialog</code> and
 <code>createPreviewFrame</code>. See the JSDoc in
 <code>src/ui/controls.js</code> for their parameters and <code>src/extensions/demo.js</code> for
-working form, tree and preview examples.</p>
+working form, tree and preview examples. <code>createIconElement(icon)</code> creates a
+decorative icon node; <code>loadIconStylesheet(root)</code> loads its Font Awesome Free
+styles into a document or shadow root. <code>iconAliases</code> is a read-only object of
+standard names to Font Awesome classes.</p>
 <p><code>createForm</code> supports native <code>color</code>, <code>date</code>, <code>range</code>, <code>switch</code>, and other
 standard fields, plus the <code>icon</code>, <code>tinymce</code>, <code>codemirror</code>, <code>sortable</code>, <code>asset</code>, and
 <code>table</code> fields:</p>
@@ -58,16 +62,17 @@ standard fields, plus the <code>icon</code>, <code>tinymce</code>, <code>codemir
   onError: (error) =&gt; context.notifications.error(error),
   fields: [
     { name: &#39;icon&#39;, label: &#39;Icon&#39;, type: &#39;icon&#39;, value: &#39;star&#39;, options: [
-      { value: &#39;star&#39;, label: &#39;Star&#39;, width: 24, height: 24, path: &#39;M12 2 L15 9 L22 9 L17 14 L19 22 L12 18 L5 22 L7 14 L2 9 L9 9 Z&#39; },
+      { value: &#39;star&#39;, label: &#39;Star&#39; },
     ] },
     { name: &#39;content&#39;, label: &#39;Content&#39;, type: &#39;tinymce&#39;, mode: &#39;simple&#39;, value: &#39;&lt;p&gt;Hello&lt;/p&gt;&#39; },
   ],
   onSubmit: ({ icon, content }) =&gt; console.log(icon, content),
 });
 </code></pre>
-<p>Icon options contain a string value and label and an SVG path with its view
-box width and height. The example extension configures a selection from Font
-Awesome Free. The icon field submits the chosen value; TinyMCE submits HTML.
+<p>Icon options contain a string value and label. Rendered values may be standard
+keys from <code>iconAliases</code> or Font Awesome classes. The example extension builds
+its gallery from all standard keys in <code>iconAliases</code>. The icon field submits the
+chosen key; TinyMCE submits HTML.
 Treat submitted HTML as untrusted and sanitize it before rendering.</p>
 <p>TinyMCE modes are <code>simple</code> (default), <code>full</code> (general open-source plugins),
 and <code>custom</code>. The simple toolbar includes undo/redo, blocks, bold, italic,
@@ -84,9 +89,8 @@ finishes; load failures are reported through <code>onError</code> (or <code>cons
 TinyMCE&#39;s own interface defaults to English; provide a local language pack
 through its <code>language</code> and <code>language_url</code> options to localize it.
 The static build includes the TinyMCE runtime. When deploying <code>src/</code> directly,
-also deploy <code>node_modules/tinymce/</code> beside it. The example additionally
-requires <code>node_modules/@fortawesome/free-solid-svg-icons/</code>.
-See the packages&#39; license files for their terms and attribution.</p>
+also deploy <code>node_modules/tinymce/</code> beside it. Font Awesome Free resources and
+their license are included under <code>src/ui/assets/fontawesome/</code>.</p>
 <p>Forms can mix fields and optional, independently collapsible groups in their
 <code>fields</code> array. Groups use <code>type: &#39;group&#39;</code>, a <code>label</code>, <code>fields</code>, and optional
 <code>collapsed: true</code>; nested groups are not supported. Group field names share

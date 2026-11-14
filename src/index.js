@@ -9,6 +9,12 @@ export { createEdy } from './core/instance.js';
 export { createPreviewFrame } from './core/preview.js';
 export { createAccordion } from './ui/accordion.js';
 export {
+  createIconElement,
+  iconAliases,
+  loadIconStylesheet,
+  resolveIcon,
+} from './ui/icons.js';
+export {
   createBadge,
   createButton,
   createButtonGroup,

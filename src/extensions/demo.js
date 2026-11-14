@@ -7,7 +7,7 @@
 
 import { createButton, createButtonGroup, createForm, createList, openDialog } from '../ui/controls.js';
 import { createPreviewFrame } from '../core/preview.js';
-import { faHouse, faFolder, faFile, faStar } from '../../node_modules/@fortawesome/free-solid-svg-icons/index.mjs';
+import { iconAliases } from '../ui/icons.js';
 
 /**
  * Demonstrates a trusted extension contributing commands, views, menus, forms, and status.
@@ -175,12 +175,10 @@ export const demoExtension = {
             { name: 'preview', label: t('preview'), type: 'switch' },
             { name: 'color', label: t('color'), type: 'color', value: '#286bc1' },
             {
-              name: 'icon', label: t('iconPicker'), type: 'icon', value: 'house',
-              options: [
-                [faHouse, t('iconHome')], [faFolder, t('iconFolder')],
-                [faFile, t('iconFile')], [faStar, t('iconStar')],
-              ].map(([icon, label]) => ({
-                value: icon.iconName, label, width: icon.icon[0], height: icon.icon[1], path: icon.icon[4],
+              name: 'icon', label: t('iconPicker'), type: 'icon', value: 'home',
+              options: Object.keys(iconAliases).map((name) => ({
+                value: name,
+                label: name.replaceAll('-', ' '),
               })),
             },
             { name: 'html', label: t('htmlEditor'), type: 'tinymce', mode: 'simple', value: '<p>Hello, Edy!</p>' },

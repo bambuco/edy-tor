@@ -8,9 +8,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createIconElement, iconAliases, resolveIcon } from '../src/ui/icons.js';
+import { createIconElement as publicCreateIcon, iconAliases as publicAliases, loadIconStylesheet } from '../src/index.js';
 
 test('icon values keep glyphs, resolve standard aliases, and accept direct classes', () => {
-  assert.ok(iconAliases.size >= 100);
+  assert.ok(Object.keys(iconAliases).length >= 100);
+  assert.equal(publicAliases, iconAliases);
+  assert.equal(publicCreateIcon, createIconElement);
+  assert.equal(typeof loadIconStylesheet, 'function');
   assert.deepEqual(resolveIcon('★'), { type: 'text', value: '★' });
   assert.deepEqual(resolveIcon('robot'), { type: 'fontawesome', classes: ['fa-solid', 'fa-robot'] });
   assert.deepEqual(resolveIcon('card'), { type: 'fontawesome', classes: ['fa-regular', 'fa-credit-card'] });
@@ -20,6 +24,38 @@ test('icon values keep glyphs, resolve standard aliases, and accept direct class
   assert.deepEqual(resolveIcon('fa-solid fa-unregistered'), { type: 'fontawesome', classes: ['fa-solid', 'fa-unregistered'] });
   assert.equal(resolveIcon(undefined), null);
   assert.throws(() => resolveIcon(12), /character string/);
+});
+
+test('public stylesheet loader uses UI assets and avoids duplicate links', () => {
+  const previous = globalThis.document;
+  const links = [];
+  const findLink = (selector) => links.find((link) => selector.includes(link.marker.split('=')[0]));
+  const host = {
+    querySelector: findLink,
+    append(element) { links.push(element); },
+  };
+  globalThis.document = {
+    head: host,
+    createElement: () => ({
+      setAttribute(name, value) { this[name] = value; this.marker = `${name}="${value}"`; },
+    }),
+  };
+  const target = {
+    ownerDocument: globalThis.document,
+    querySelector: findLink,
+    append(element) { links.push(element); },
+  };
+  try {
+    const first = loadIconStylesheet(target);
+    const second = loadIconStylesheet(target);
+    assert.equal(first, second);
+    assert.match(first.href, /src\/ui\/assets\/fontawesome\/css\/all\.min\.css$/);
+    assert.equal(links.filter((link) => link.marker === 'data-edy-fontawesome-fonts=""').length, 1);
+    assert.match(links.find((link) => link.marker === 'data-edy-fontawesome-fonts=""').href, /css\/fonts\.css$/);
+  }
+  finally {
+    globalThis.document = previous;
+  }
 });
 
 test('Font Awesome icons render as decorative class-based elements', () => {

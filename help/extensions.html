@@ -47,7 +47,9 @@ character if no icon is provided. Icons may use a standard key such as <code>rob
 or <code>card</code>, a direct Font Awesome class list such as <code>fa-solid fa-robot</code>, or a
 single-character glyph. Unknown class lists are passed through without
 validation. The same values are accepted by menu items and accordion actions.
-Only Font Awesome Free styles and icons are included.</p>
+The public <code>createIconElement</code>, <code>iconAliases</code>, and <code>loadIconStylesheet</code> exports
+are available from <code>src/index.js</code>. Font Awesome Free styles and webfonts are
+distributed with <code>src/ui/assets/</code>.</p>
 <p>Instead of <code>render</code>, a primary view may provide <code>sections</code>, an array of
 <code>{ id, title, render, height, collapsed, actions }</code>. The accordion fills the
 sidebar, allows each section to collapse, and exposes pointer and keyboard

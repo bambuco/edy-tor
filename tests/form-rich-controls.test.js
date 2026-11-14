@@ -19,6 +19,7 @@ test('icon and TinyMCE fields report load errors and submit their values', async
       this.children = [];
       this.listeners = {};
       this.attributes = {};
+      this.classList = { add: (...names) => { this.classes = [...(this.classes ?? []), ...names]; } };
       this.value = '';
       this.style = {};
       this.offsetHeight = 402;
@@ -48,11 +49,12 @@ test('icon and TinyMCE fields report load errors and submit their values', async
       onSubmit: (value) => values.push(value),
       fields: [
         { name: 'icon', type: 'icon', value: 'star', options: [
-          { value: 'star', label: 'Star', width: 10, height: 10, path: 'M0 0' },
+          { value: 'star', label: 'Star' },
         ] },
         { name: 'html', type: 'tinymce', required: true },
       ],
     });
+    assert.ok(nodes.some((node) => node.classes?.includes('fa-star')));
     const frame = nodes.find((node) => node.tag === 'iframe');
     frame.listeners.load();
     assert.match(errors[0], /Unable to load/);

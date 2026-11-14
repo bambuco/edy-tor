@@ -41,12 +41,16 @@ document is removed; closing a sidebar or preview hides the surface.
 
 ## UI helpers
 
-Exports include `createButton`, `createLink`, `createBadge`, `createMessage`,
+Exports include `createIconElement`, `iconAliases`, `loadIconStylesheet`,
+`createButton`, `createLink`, `createBadge`, `createMessage`,
 `createProgress`, `createSeparator`, `createForm`, `createList`, `createTabs`,
 `createButtonGroup`, `createAccordion`, `openDialog`, `confirmDialog` and
 `createPreviewFrame`. See the JSDoc in
 `src/ui/controls.js` for their parameters and `src/extensions/demo.js` for
-working form, tree and preview examples.
+working form, tree and preview examples. `createIconElement(icon)` creates a
+decorative icon node; `loadIconStylesheet(root)` loads its Font Awesome Free
+styles into a document or shadow root. `iconAliases` is a read-only object of
+standard names to Font Awesome classes.
 
 `createForm` supports native `color`, `date`, `range`, `switch`, and other
 standard fields, plus the `icon`, `tinymce`, `codemirror`, `sortable`, `asset`, and
@@ -58,7 +62,7 @@ createForm({
   onError: (error) => context.notifications.error(error),
   fields: [
     { name: 'icon', label: 'Icon', type: 'icon', value: 'star', options: [
-      { value: 'star', label: 'Star', width: 24, height: 24, path: 'M12 2 L15 9 L22 9 L17 14 L19 22 L12 18 L5 22 L7 14 L2 9 L9 9 Z' },
+      { value: 'star', label: 'Star' },
     ] },
     { name: 'content', label: 'Content', type: 'tinymce', mode: 'simple', value: '<p>Hello</p>' },
   ],
@@ -66,9 +70,10 @@ createForm({
 });
 ```
 
-Icon options contain a string value and label and an SVG path with its view
-box width and height. The example extension configures a selection from Font
-Awesome Free. The icon field submits the chosen value; TinyMCE submits HTML.
+Icon options contain a string value and label. Rendered values may be standard
+keys from `iconAliases` or Font Awesome classes. The example extension builds
+its gallery from all standard keys in `iconAliases`. The icon field submits the
+chosen key; TinyMCE submits HTML.
 Treat submitted HTML as untrusted and sanitize it before rendering.
 
 TinyMCE modes are `simple` (default), `full` (general open-source plugins),
@@ -86,9 +91,8 @@ finishes; load failures are reported through `onError` (or `console.error`).
 TinyMCE's own interface defaults to English; provide a local language pack
 through its `language` and `language_url` options to localize it.
 The static build includes the TinyMCE runtime. When deploying `src/` directly,
-also deploy `node_modules/tinymce/` beside it. The example additionally
-requires `node_modules/@fortawesome/free-solid-svg-icons/`.
-See the packages' license files for their terms and attribution.
+also deploy `node_modules/tinymce/` beside it. Font Awesome Free resources and
+their license are included under `src/ui/assets/fontawesome/`.
 
 Forms can mix fields and optional, independently collapsible groups in their
 `fields` array. Groups use `type: 'group'`, a `label`, `fields`, and optional

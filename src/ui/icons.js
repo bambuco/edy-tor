@@ -5,7 +5,7 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-export const iconAliases = new Map([
+const iconAliasMap = new Map([
   ['activity', 'fa-solid fa-chart-line'],
   ['address-book', 'fa-regular fa-address-book'],
   ['align-center', 'fa-solid fa-align-center'],
@@ -171,6 +171,8 @@ export const iconAliases = new Map([
   ['cubes', 'fa-solid fa-cubes'],
 ]);
 
+export const iconAliases = Object.freeze(Object.fromEntries(iconAliasMap));
+
 /**
  * Resolves a glyph, standard alias, or Font Awesome class list.
  * @param {string|undefined|null} icon Icon contribution.
@@ -188,7 +190,7 @@ export function resolveIcon(icon) {
     if (Array.from(value).length === 1) {
       return { type: 'text', value };
     }
-    const alias = iconAliases.get(value.toLowerCase());
+    const alias = iconAliases[value.toLowerCase()];
     if (!alias && !/^[a-zA-Z0-9_-]+(?:\s+[a-zA-Z0-9_-]+)*$/.test(value)) {
       return { type: 'text', value };
     }
@@ -217,4 +219,36 @@ export function createIconElement(icon) {
   }
   element.classList.add(...resolved.classes);
   return element;
+}
+
+/**
+ * Loads Font Awesome styles into a document or shadow root.
+ * @param {Document|ShadowRoot|HTMLElement} target Style host.
+ * @returns {HTMLLinkElement} Font Awesome stylesheet link.
+ */
+export function loadIconStylesheet(target) {
+  const host = target?.nodeType === 9 ? target.head : target;
+  if (!host || typeof host.append !== 'function') {
+    throw new TypeError('An icon stylesheet target must support append().');
+  }
+  const ownerDocument = target?.nodeType === 9 ? target : target.ownerDocument ?? document;
+  const fontHost = ownerDocument.head;
+  let fontStylesheet = fontHost.querySelector('link[data-edy-fontawesome-fonts]');
+  if (!fontStylesheet) {
+    fontStylesheet = document.createElement('link');
+    fontStylesheet.rel = 'stylesheet';
+    fontStylesheet.href = new URL('./assets/fontawesome/css/fonts.css', import.meta.url).href;
+    fontStylesheet.setAttribute('data-edy-fontawesome-fonts', '');
+    fontHost.append(fontStylesheet);
+  }
+  const existing = host.querySelector?.('link[data-edy-fontawesome]');
+  if (existing) {
+    return existing;
+  }
+  const stylesheet = document.createElement('link');
+  stylesheet.rel = 'stylesheet';
+  stylesheet.href = new URL('./assets/fontawesome/css/all.min.css', import.meta.url).href;
+  stylesheet.setAttribute('data-edy-fontawesome', '');
+  host.append(stylesheet);
+  return stylesheet;
 }
