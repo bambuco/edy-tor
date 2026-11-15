@@ -90,9 +90,10 @@ resized, including by keyboard or automatic resizing. The form rejects submissio
 finishes; load failures are reported through `onError` (or `console.error`).
 TinyMCE's own interface defaults to English; provide a local language pack
 through its `language` and `language_url` options to localize it.
-The static build includes the TinyMCE runtime. When deploying `src/` directly,
-also deploy `node_modules/tinymce/` beside it. Font Awesome Free resources and
-their license are included under `src/ui/assets/fontawesome/`.
+The editor build copies the complete TinyMCE distribution to
+`src/ui/vendor/tinymce/`; the static build includes it with `src/`. Run
+`npm run build:editor` before deploying `src/` directly. Font Awesome Free
+resources and their license are included under `src/ui/assets/fontawesome/`.
 
 Forms can mix fields and optional, independently collapsible groups in their
 `fields` array. Groups use `type: 'group'`, a `label`, `fields`, and optional

@@ -13,8 +13,9 @@ npm run build
 
 `npm start` and `npm run build` bundle the locally installed CodeMirror
 packages and their license notices into `src/ui/codemirror-bundle.js` and
-`src/ui/codemirror-licenses.txt`. Run `npm run build:editor` before serving
-`src/` directly with another server. The static build includes these assets;
+`src/ui/codemirror-licenses.txt`, and copy TinyMCE's complete distribution to
+`src/ui/vendor/tinymce/`. Run `npm run build:editor` before serving `src/`
+directly with another server. The static build includes these assets;
 CodeMirror's dependencies are bundled separately from the reported core
 size, and are not fetched from a CDN.
 

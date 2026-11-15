@@ -25,7 +25,9 @@ JavaScript MIME type; opening an HTML file directly is not supported.
 Deploy `src/` and its CSS together on the same origin as your page. From an
 HTML page at the same level as `src/`:
 
-For TinyMCE form fields, also deploy `node_modules/tinymce/` at the same level.
+Before deploying `src/` directly, run `npm run build:editor` to prepare
+`src/ui/vendor/tinymce/`. Deploy that generated directory with `src/`; the
+TinyMCE runtime no longer needs to be deployed from `node_modules/`.
 Font Awesome Free CSS and webfonts are included under `src/ui/assets/` and are
 copied with `src/`; no Font Awesome runtime package is needed. The CSS selectors
 load in the editor's shadow root and the font-face definitions load once in the

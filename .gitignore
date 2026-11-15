@@ -2,5 +2,6 @@
 /dist/
 /src/ui/codemirror-bundle.js
 /src/ui/codemirror-licenses.txt
+/src/ui/vendor/
 
 *.log

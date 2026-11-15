@@ -26,7 +26,9 @@ JavaScript MIME type; opening an HTML file directly is not supported.</p>
 <h2>Embed Edy</h2>
 <p>Deploy <code>src/</code> and its CSS together on the same origin as your page. From an
 HTML page at the same level as <code>src/</code>:</p>
-<p>For TinyMCE form fields, also deploy <code>node_modules/tinymce/</code> at the same level.
+<p>Before deploying <code>src/</code> directly, run <code>npm run build:editor</code> to prepare
+<code>src/ui/vendor/tinymce/</code>. Deploy that generated directory with <code>src/</code>; the
+TinyMCE runtime no longer needs to be deployed from <code>node_modules/</code>.
 Font Awesome Free CSS and webfonts are included under <code>src/ui/assets/</code> and are
 copied with <code>src/</code>; no Font Awesome runtime package is needed. The CSS selectors
 load in the editor&#39;s shadow root and the font-face definitions load once in the

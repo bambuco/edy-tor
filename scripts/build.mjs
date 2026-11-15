@@ -24,16 +24,12 @@ async function build() {
   const { stdout } = await promisify(execFile)(process.execPath, [path.join(root, 'scripts/docs.mjs')], { cwd: root });
   process.stdout.write(stdout);
   await mkdir(output, { recursive: true });
+  await rm(path.join(output, 'node_modules', 'tinymce'), { recursive: true, force: true });
   await rm(path.join(output, 'node_modules', '@fortawesome', 'fontawesome-free'), { recursive: true, force: true });
   for (const entry of ['src', 'examples', 'scripts', 'docs', 'help', 'README.md', 'LICENSE', 'package.json', 'package-lock.json']) {
     await cp(path.join(root, entry), path.join(output, entry), { recursive: true });
   }
   await rm(path.join(output, 'node_modules', '@fortawesome', 'free-solid-svg-icons'), { recursive: true, force: true });
-  for (const dependency of ['tinymce']) {
-    const destination = path.join(output, 'node_modules', dependency);
-    await mkdir(path.dirname(destination), { recursive: true });
-    await cp(path.join(root, 'node_modules', dependency), destination, { recursive: true });
-  }
   const coreFiles = [
     'src/index.js',
     'src/core/instance.js',

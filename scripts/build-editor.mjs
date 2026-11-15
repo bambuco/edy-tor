@@ -6,11 +6,13 @@
  */
 
 import { build } from 'esbuild';
-import { readFile, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const tinymceSource = path.join(root, 'node_modules/tinymce');
+const tinymceDestination = path.join(root, 'src/ui/vendor/tinymce');
 const result = await build({
   absWorkingDir: root,
   entryPoints: ['src/ui/codemirror-entry.js'],
@@ -31,3 +33,6 @@ const licenses = await Promise.all([...packages].sort().map(async (name) => {
   return `--- ${name} ---\n${text.trim()}\n`;
 }));
 await writeFile(path.join(root, 'src/ui/codemirror-licenses.txt'), licenses.join('\n'));
+await rm(tinymceDestination, { recursive: true, force: true });
+await mkdir(path.dirname(tinymceDestination), { recursive: true });
+await cp(tinymceSource, tinymceDestination, { recursive: true });
