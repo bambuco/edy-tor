@@ -184,8 +184,6 @@ iframe:focus-visible {
 
 .edy-icon {
   display: inline-block;
-  width: 1em;
-  height: 1em;
   flex: none;
   vertical-align: -0.125em;
 }
@@ -657,6 +655,12 @@ iframe:focus-visible {
   background: transparent;
   border: 1px solid transparent;
   border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+
+  .edy-icon {
+    margin-right: 4px;
+  }
 }
 
 .edy-button:hover,

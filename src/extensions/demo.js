@@ -218,6 +218,13 @@ export const demoExtension = {
           onSubmit: (values) => context.notifications.success(`${t('formApplied')} ${t('iconPicker')}: ${values.icon}; ${t('htmlEditor')}: ${values.html}${values.asset ? `; ${t('assetExample')}: ${values.asset.join(', ')}` : ''}`),
           onCancel: () => context.notifications.info(t('cancel')),
         });
+        const formLabel = document.createElement('h3');
+        formLabel.textContent = t('formTitle');
+        const formSection = document.createElement('section');
+        formSection.append(formLabel, form);
+
+        const groupLabel = document.createElement('h3');
+        groupLabel.textContent = t('groupExamples');
         const group = createButtonGroup({
           label: t('sampleActions'),
           buttons: [
@@ -248,7 +255,38 @@ export const demoExtension = {
             },
           ],
         });
-        content.append(heading, group, form);
+        const groupSection = document.createElement('section');
+        groupSection.append(groupLabel, group);
+
+        const buttonsSection = document.createElement('section');
+        const buttonsLabel = document.createElement('h3');
+        buttonsLabel.textContent = t('buttonExamples');
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.style.display = 'flex';
+        buttonsContainer.style.gap = '8px';
+        buttonsContainer.style.alignItems = 'center';
+        buttonsContainer.append(
+          createButton({
+            label: t('buttonTextOnly'),
+            onClick: () => context.notifications.info(t('buttonTextOnly')),
+          }),
+          createButton({
+            label: t('buttonWithIcon'),
+            icon: 'save',
+            variant: 'primary',
+            onClick: () => context.notifications.info(t('buttonWithIcon')),
+          }),
+          createButton({
+            label: t('buttonIconOnly'),
+            icon: 'star',
+            variant: 'secondary',
+            onClick: () => context.notifications.info('Star button'),
+            title: 'Add to favorites',
+          }),
+        );
+        buttonsSection.append(buttonsLabel, buttonsContainer);
+
+        content.append(heading, groupSection, buttonsSection, formSection);
         return { element: content, dispose: () => form.dispose() };
       },
     });
