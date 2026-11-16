@@ -46,10 +46,17 @@ Primary activity buttons use the provided icon, or the title&#39;s first
 character if no icon is provided. Icons may use a standard key such as <code>robot</code>
 or <code>card</code>, a direct Font Awesome class list such as <code>fa-solid fa-robot</code>, or a
 single-character glyph. Unknown class lists are passed through without
-validation. The same values are accepted by menu items and accordion actions.
+validation. The same values are accepted by menu items, accordion actions, and
+editor breadcrumb items.
 The public <code>createIconElement</code>, <code>iconAliases</code>, and <code>loadIconStylesheet</code> exports
 are available from <code>src/index.js</code>. Font Awesome Free styles and webfonts are
 distributed with <code>src/ui/assets/</code>.</p>
+<p>Documents and editor views can expose a dynamic path above their contents with
+<code>context.breadcrumbs.set({ type, id }, items)</code>. Each item has an <code>id</code>, <code>label</code>,
+optional <code>icon</code>, and <code>onSelect</code> callback. Use the callback to navigate or focus
+the extension&#39;s content; update the path when its selection changes. The path
+is scoped to the contribution and cleared automatically when it is removed.
+See <a href="./api.html#editor-breadcrumbs">editor breadcrumbs</a> for the full contract.</p>
 <p>Instead of <code>render</code>, a primary view may provide <code>sections</code>, an array of
 <code>{ id, title, render, height, collapsed, actions }</code>. The accordion fills the
 sidebar, allows each section to collapse, and exposes pointer and keyboard

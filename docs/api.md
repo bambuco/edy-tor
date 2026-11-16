@@ -25,6 +25,7 @@ note are recorded in `src/assets/CREDITS.md`.
   Activity-bar `icon` accepts a character, a standard key such as `robot` or
   `card`, or direct Font Awesome classes such as `fa-solid fa-robot`.
 - `documents.open(id, { title, render })`, `close(id)`.
+- `breadcrumbs.set({ type, id }, items)`, `clear({ type, id })`.
 - `menus.register(menuId, { id, label, commandId, icon, shortcut, order })`.
   Menu and accordion `icon` values use the same aliases or direct Font Awesome
   classes. Unknown class names are passed through without validation.
@@ -38,6 +39,37 @@ note are recorded in `src/assets/CREDITS.md`.
 For renderers that attach listeners or own frames, return `{ element,
 dispose }`. Edy disposes the contribution when it is unmounted. A closed
 document is removed; closing a sidebar or preview hides the surface.
+
+### Editor breadcrumbs
+
+An extension can set a breadcrumb path for one of its own registered documents
+or editor views:
+
+```js
+context.breadcrumbs.set({ type: 'document', id: 'page' }, [
+  { id: 'page', label: 'Page', icon: 'file', onSelect: () => focusPage() },
+  { id: 'section', label: 'Introduction', onSelect: () => focusSection() },
+]);
+```
+
+`type` is `document` or `view`; a view must have `location: 'editor'`.
+Each item requires a unique non-empty `id`, a non-empty `label`, and an
+`onSelect` function. Optional `icon` accepts the same glyph, alias, or Font
+Awesome classes as view icons and appears before the label. The final item
+denotes the current location. Buttons invoke `onSelect` for mouse and keyboard;
+the extension decides how to select, focus, or scroll its content. Synchronous
+errors and rejected promises are logged and reported through notifications.
+
+`set` replaces the path; an empty array hides it. `clear(target)` also hides it.
+Updates are independent of editor rendering. Only the active contribution's
+path is visible, below the tabs or first when tabs are absent; it stays visible
+when the editor content scrolls. A split preview does not have a separate path.
+Paths are discarded when their contribution is removed, including when a
+document is closed or an extension is deactivated. Updating an unregistered
+target or using the API after disposal throws; cancel asynchronous updates when
+their contribution is closed. In particular, an ID may be reused after closing
+a document, so an update addressed by that ID cannot distinguish the old
+document from the new one. Separate Edy instances have separate paths.
 
 ## UI helpers
 

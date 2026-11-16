@@ -566,6 +566,11 @@ export class Workbench {
     const content = document.createElement('div');
     content.className = 'edy-editor__content';
     this.renderEditorContent(content);
+    const breadcrumbs = document.createElement('nav');
+    breadcrumbs.className = 'edy-editor__breadcrumbs';
+    breadcrumbs.setAttribute('aria-label', this.instance.translate('breadcrumbs'));
+    this.renderBreadcrumbs(breadcrumbs);
+    editor.append(breadcrumbs);
     surfaces.append(content);
     if (this.previewVisible) {
       const previews = this.instance.views.entries().filter(([, view]) => view.location === 'preview');
@@ -640,6 +645,71 @@ export class Workbench {
         this.renderedContributions.delete(previous);
         this.disposeRenderResources();
       }
+      this.refreshBreadcrumbs();
+    }
+  }
+
+  /**
+   * Renders the active contribution's breadcrumb path.
+   * @param {HTMLElement} nav Breadcrumb navigation element.
+   * @returns {void}
+   */
+  renderBreadcrumbs(nav) {
+    const type = this.activeEditorView ? 'view' : 'document';
+    const id = this.activeEditorView || this.activeDocument;
+    const items = this.instance.breadcrumbs[type].get(id)?.items ?? [];
+    const focused = this.shadow.activeElement;
+    const focusedId = nav.contains(focused) ? focused.dataset.breadcrumbId : null;
+    const list = document.createElement('ol');
+    for (const [index, item] of items.entries()) {
+      const entry = document.createElement('li');
+      if (index) {
+        const separator = document.createElement('span');
+        separator.className = 'edy-editor__breadcrumb-separator';
+        separator.setAttribute('aria-hidden', 'true');
+        separator.textContent = '›';
+        entry.append(separator);
+      }
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'edy-editor__breadcrumb';
+      button.dataset.breadcrumbId = item.id;
+      if (index === items.length - 1) {
+        button.setAttribute('aria-current', 'location');
+      }
+      const icon = createIconElement(item.icon);
+      if (icon) {
+        button.append(icon);
+      }
+      const label = document.createElement('span');
+      label.textContent = item.label;
+      button.append(label);
+      button.addEventListener('click', async () => {
+        try {
+          await item.onSelect();
+        }
+        catch (error) {
+          this.instance.reportError(error, `${this.instance.translate('breadcrumbFailed')}: ${item.label}`);
+        }
+      });
+      entry.append(button);
+      list.append(entry);
+    }
+    nav.hidden = !items.length;
+    nav.replaceChildren(list);
+    if (focusedId && !this.shadow.activeElement) {
+      [...nav.querySelectorAll('button')].find((button) => button.dataset.breadcrumbId === focusedId)?.focus();
+    }
+  }
+
+  /**
+   * Updates breadcrumbs without replacing the editor contribution.
+   * @returns {void}
+   */
+  refreshBreadcrumbs() {
+    const nav = this.layout?.querySelector('.edy-editor__breadcrumbs');
+    if (nav) {
+      this.renderBreadcrumbs(nav);
     }
   }
 
@@ -682,7 +752,7 @@ export class Workbench {
       return;
     }
     const existing = editor.querySelector('.edy-editor__tabs');
-    const content = editor.querySelector('.edy-editor__surfaces');
+    const content = editor.querySelector('.edy-editor__breadcrumbs') ?? editor.querySelector('.edy-editor__surfaces');
     const tabs = this.renderEditorTabs();
     if (tabs.childElementCount) {
       if (existing) {

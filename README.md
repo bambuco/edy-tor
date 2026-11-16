@@ -129,6 +129,7 @@ Available context services are:
 - `commands.register(id, { label, execute, enabled })`, `commands.execute(id, ...args)`, and `commands.refresh()`
 - `views.register(id, { title, location, render })` and `views.open(id)`
 - `documents.open(id, { title, render })` and `documents.close(id)`
+- `breadcrumbs.set({ type, id }, items)` and `breadcrumbs.clear({ type, id })`
 - `menus.register(menuId, { id, label, commandId, icon, shortcut, order })`; use `context` for right-click actions
 - `status.register(id, { label, tooltip, onClick })`
 - `notifications.info(message)`, `success(message)`, and `error(error, message)`

@@ -31,6 +31,7 @@ note are recorded in <code>src/assets/CREDITS.md</code>.</p>
 Activity-bar <code>icon</code> accepts a character, a standard key such as <code>robot</code> or
 <code>card</code>, or direct Font Awesome classes such as <code>fa-solid fa-robot</code>.</li>
 <li><code>documents.open(id, { title, render })</code>, <code>close(id)</code>.</li>
+<li><code>breadcrumbs.set({ type, id }, items)</code>, <code>clear({ type, id })</code>.</li>
 <li><code>menus.register(menuId, { id, label, commandId, icon, shortcut, order })</code>.
 Menu and accordion <code>icon</code> values use the same aliases or direct Font Awesome
 classes. Unknown class names are passed through without validation.
@@ -43,6 +44,31 @@ and <code>apiVersion</code>.</li>
 </ul>
 <p>For renderers that attach listeners or own frames, return <code>{ element, dispose }</code>. Edy disposes the contribution when it is unmounted. A closed
 document is removed; closing a sidebar or preview hides the surface.</p>
+<h3>Editor breadcrumbs</h3>
+<p>An extension can set a breadcrumb path for one of its own registered documents
+or editor views:</p>
+<pre><code class="language-js">context.breadcrumbs.set({ type: &#39;document&#39;, id: &#39;page&#39; }, [
+  { id: &#39;page&#39;, label: &#39;Page&#39;, icon: &#39;file&#39;, onSelect: () =&gt; focusPage() },
+  { id: &#39;section&#39;, label: &#39;Introduction&#39;, onSelect: () =&gt; focusSection() },
+]);
+</code></pre>
+<p><code>type</code> is <code>document</code> or <code>view</code>; a view must have <code>location: &#39;editor&#39;</code>.
+Each item requires a unique non-empty <code>id</code>, a non-empty <code>label</code>, and an
+<code>onSelect</code> function. Optional <code>icon</code> accepts the same glyph, alias, or Font
+Awesome classes as view icons and appears before the label. The final item
+denotes the current location. Buttons invoke <code>onSelect</code> for mouse and keyboard;
+the extension decides how to select, focus, or scroll its content. Synchronous
+errors and rejected promises are logged and reported through notifications.</p>
+<p><code>set</code> replaces the path; an empty array hides it. <code>clear(target)</code> also hides it.
+Updates are independent of editor rendering. Only the active contribution&#39;s
+path is visible, below the tabs or first when tabs are absent; it stays visible
+when the editor content scrolls. A split preview does not have a separate path.
+Paths are discarded when their contribution is removed, including when a
+document is closed or an extension is deactivated. Updating an unregistered
+target or using the API after disposal throws; cancel asynchronous updates when
+their contribution is closed. In particular, an ID may be reused after closing
+a document, so an update addressed by that ID cannot distinguish the old
+document from the new one. Separate Edy instances have separate paths.</p>
 <h2>UI helpers</h2>
 <p>Exports include <code>createIconElement</code>, <code>iconAliases</code>, <code>loadIconStylesheet</code>,
 <code>createButton</code>, <code>createLink</code>, <code>createBadge</code>, <code>createMessage</code>,

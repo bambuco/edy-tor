@@ -99,8 +99,13 @@ export class EdyInstance {
       throw new Error('A reusable Edy shadow root must be empty.');
     }
     this.shadow = existingRoot ?? container.attachShadow({ mode: 'open' });
-    this.views = new Registry(() => this.workbench?.render());
+    this.breadcrumbs = { view: new Map(), document: new Map() };
+    this.views = new Registry(() => {
+      this.pruneBreadcrumbs('view');
+      this.workbench?.render();
+    });
     this.documents = new Registry(() => {
+      this.pruneBreadcrumbs('document');
       if (!this.workbench) {
         return;
       }
@@ -114,6 +119,20 @@ export class EdyInstance {
     this.menus = new Registry(() => this.workbench?.refreshMenuSurfaces());
     this.status = new Registry(() => this.workbench?.refreshStatus());
     this.workbench = new Workbench(this);
+  }
+
+  /**
+   * Removes breadcrumb state belonging to unregistered contributions.
+   * @param {'view'|'document'} type Contribution type.
+   * @returns {void}
+   */
+  pruneBreadcrumbs(type) {
+    const registry = type === 'view' ? this.views : this.documents;
+    for (const [id, state] of this.breadcrumbs[type]) {
+      if (registry.get(id) !== state.contribution) {
+        this.breadcrumbs[type].delete(id);
+      }
+    }
   }
 
   /**
@@ -315,6 +334,22 @@ export class EdyInstance {
         throw new TypeError(`${label} must have a non-empty identifier.`);
       }
     };
+    const breadcrumbTarget = (target) => {
+      if (store.disposed || this.disposed || this.disposing) {
+        throw new Error('Breadcrumbs cannot be updated after the extension is disposed.');
+      }
+      if (!target || !['view', 'document'].includes(target.type)) {
+        throw new TypeError('Breadcrumb targets require a view or document type.');
+      }
+      validIdentifier(target.id, 'Breadcrumb targets');
+      const id = publicId(target.id);
+      const registry = target.type === 'view' ? this.views : this.documents;
+      const contribution = registry.get(id);
+      if (!contribution || (target.type === 'view' && contribution.location !== 'editor')) {
+        throw new Error(`Editor ${target.type} "${id}" is not registered.`);
+      }
+      return { type: target.type, id, contribution };
+    };
     return Object.freeze({
       extensionId: extension.id,
       apiVersion: '1',
@@ -376,6 +411,42 @@ export class EdyInstance {
           return resource;
         },
         close: (id) => this.documents.remove(publicId(id)),
+      }),
+      breadcrumbs: Object.freeze({
+        set: (target, items) => {
+          const { type, id, contribution } = breadcrumbTarget(target);
+          if (!Array.isArray(items)) {
+            throw new TypeError('Breadcrumbs must be an array.');
+          }
+          const ids = new Set();
+          const normalized = items.map((item) => {
+            if (!item || typeof item.id !== 'string' || !item.id.trim() ||
+                typeof item.label !== 'string' || !item.label.trim() ||
+                typeof item.onSelect !== 'function') {
+              throw new TypeError('Breadcrumb items require an id, label, and onSelect function.');
+            }
+            if (ids.has(item.id)) {
+              throw new Error(`Breadcrumb item "${item.id}" is duplicated.`);
+            }
+            ids.add(item.id);
+            if (item.icon !== undefined && resolveIcon(item.icon) === null) {
+              throw new TypeError('Breadcrumb icons must be a non-empty character or Font Awesome icon name.');
+            }
+            return { id: item.id, label: item.label, icon: item.icon, onSelect: item.onSelect };
+          });
+          if (normalized.length) {
+            this.breadcrumbs[type].set(id, { contribution, items: normalized });
+          }
+          else {
+            this.breadcrumbs[type].delete(id);
+          }
+          this.workbench.refreshBreadcrumbs();
+        },
+        clear: (target) => {
+          const { type, id } = breadcrumbTarget(target);
+          this.breadcrumbs[type].delete(id);
+          this.workbench.refreshBreadcrumbs();
+        },
       }),
       menus: Object.freeze({
         register: (menuId, item) => {

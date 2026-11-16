@@ -523,6 +523,57 @@ iframe:focus-visible {
   flex: none;
 }
 
+.edy-editor__breadcrumbs {
+  flex: none;
+  min-width: 0;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--edy-color-border);
+}
+
+.edy-editor__breadcrumbs[hidden] {
+  display: none;
+}
+
+.edy-editor__breadcrumbs ol {
+  display: flex;
+  width: max-content;
+  min-width: 100%;
+  margin: 0;
+  padding: 2px 8px;
+  list-style: none;
+}
+
+.edy-editor__breadcrumbs li {
+  display: flex;
+  align-items: center;
+}
+
+.edy-editor__breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px;
+  color: var(--edy-color-text);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.edy-editor__breadcrumb:hover {
+  background: var(--edy-color-background);
+}
+
+.edy-editor__breadcrumb:focus-visible {
+  outline: 2px solid var(--edy-color-accent);
+  outline-offset: -2px;
+}
+
+.edy-editor__breadcrumb-separator {
+  padding: 0 2px;
+  color: var(--edy-color-muted);
+}
+
 .edy-editor__tab [data-action="close-document"] {
   min-width: 24px;
   padding-inline: 5px;

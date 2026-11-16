@@ -23,7 +23,13 @@ export function createButton({ label, onClick, disabled = false, icon, variant =
   button.type = 'button';
   button.className = `edy-button edy-button--${variant}`;
   button.disabled = disabled;
-  button.textContent = icon ? `${icon} ${label}` : label;
+  button.textContent = label;
+  if (icon) {
+    const iconElement = createIconElement(icon);
+    if (iconElement) {
+      button.prepend(iconElement);
+    }
+  }
   if (onClick) {
     button.addEventListener('click', onClick);
   }

@@ -332,6 +332,7 @@ export const demoExtension = {
         const content = document.createElement('article');
         const heading = document.createElement('h1');
         heading.textContent = t('sampleItem');
+        heading.tabIndex = -1;
         const paragraph = document.createElement('p');
         paragraph.textContent = t('livePreviewHelp');
         const label = document.createElement('label');
@@ -340,12 +341,32 @@ export const demoExtension = {
         input.value = previewText;
         input.rows = 6;
         input.maxLength = 10000;
+        const updateBreadcrumbs = (editing) => {
+          const items = [{
+            id: 'document',
+            label: t('sampleItem'),
+            icon: 'file',
+            onSelect: () => heading.focus(),
+          }];
+          if (editing) {
+            items.push({
+              id: 'text',
+              label: t('livePreviewText'),
+              icon: 'edit',
+              onSelect: () => input.focus(),
+            });
+          }
+          context.breadcrumbs.set({ type: 'document', id: 'sample-document' }, items);
+        };
+        heading.addEventListener('focus', () => updateBreadcrumbs(false));
+        input.addEventListener('focus', () => updateBreadcrumbs(true));
         input.addEventListener('input', () => {
           previewText = input.value;
           updatePreview();
         });
         label.append(input);
         content.append(heading, paragraph, label);
+        updateBreadcrumbs(false);
         return content;
       },
     });
