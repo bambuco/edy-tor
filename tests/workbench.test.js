@@ -28,6 +28,21 @@ test('invalid custom stylesheet options are rejected before mounting', () => {
   assert.throws(() => createEdy({ container, customCss: 'http://[' }), TypeError);
 });
 
+test('invalid initial workbench state is rejected before mounting', () => {
+  const container = { attachShadow() { throw new Error('Should not mount'); } };
+  for (const initialState of [null, [], 'invalid', { unknown: true }]) {
+    assert.throws(() => createEdy({ container, initialState }), /initialState must be an object/);
+  }
+  for (const initialState of [
+    { bottomPanel: { visible: 'false' } },
+    { primarySidebar: { title: '  ' } },
+    { preview: { visible: 1 } },
+    { showPanelVisibilityInMenu: 'false' },
+  ]) {
+    assert.throws(() => createEdy({ container, initialState }), /initialState\./);
+  }
+});
+
 test('custom stylesheets resolve per instance, report failures and are removed on disposal', async () => {
   const previousDocument = globalThis.document;
   const previousWindow = globalThis.window;
@@ -78,10 +93,22 @@ test('custom stylesheets resolve per instance, report failures and are removed o
     const second = createEdy({ container: container(), customCss: '/theme.css' });
     const third = createEdy({ container: container(), customCss: 'https://cdn.example.test/theme.css' });
     const fourth = createEdy({ container: container() });
+    const configured = createEdy({
+      container: container(),
+      initialState: {
+        bottomPanel: { visible: false, title: 'Console' },
+        preview: { visible: true },
+        showPanelVisibilityInMenu: false,
+      },
+    });
     assert.equal(first.customCss, 'https://example.test/base/custom.css');
     assert.equal(second.customCss, 'https://example.test/theme.css');
     assert.equal(third.customCss, 'https://cdn.example.test/theme.css');
     assert.equal(fourth.customCss, undefined);
+    assert.equal(configured.workbench.panelVisible, false);
+    assert.equal(configured.workbench.previewVisible, true);
+    assert.equal(configured.workbench.instance.initialState.bottomPanel.title, 'Console');
+    assert.equal(configured.workbench.instance.initialState.showPanelVisibilityInMenu, false);
     assert.deepEqual(first.shadow.childNodes.map((child) => child.tagName), ['link', 'link', 'link', 'div']);
     const customLink = first.shadow.childNodes[2];
     assert.equal(customLink.href, first.customCss);
@@ -96,7 +123,7 @@ test('custom stylesheets resolve per instance, report failures and are removed o
     customLink.dispatchEvent(new Event('error'));
     assert.equal(errors.length, 1);
 
-    await Promise.all([first.dispose(), second.dispose(), third.dispose(), fourth.dispose()]);
+    await Promise.all([first.dispose(), second.dispose(), third.dispose(), fourth.dispose(), configured.dispose()]);
     assert.equal(first.shadow.childNodes.length, 0);
     const remounted = createEdy({ container: firstHost });
     assert.equal(remounted.shadow.childNodes.filter((child) => child.tagName === 'link').length, 2);
@@ -129,6 +156,133 @@ test('theme is applied to both the workbench and the dialog host', () => {
   workbench.applyTheme(layout);
   assert.equal(layout.dataset.theme, 'light');
   assert.equal(attributes.get('data-edy-theme'), 'light');
+});
+
+test('view menu groups panel toggles and reflects their visibility state', () => {
+  const previousDocument = globalThis.document;
+  class Element {
+    constructor(tagName) {
+      this.tagName = tagName;
+      this.children = [];
+      this.attributes = new Map();
+      this.dataset = {};
+      this.style = {};
+      this.classList = {
+        add: (...names) => names.forEach((name) => {
+          this.classes ??= new Set();
+          this.classes.add(name);
+        }),
+      };
+    }
+    append(...elements) { this.children.push(...elements); }
+    prepend(element) { this.children.unshift(element); }
+    replaceChildren(...elements) { this.children = elements; }
+    setAttribute(name, value) { this.attributes.set(name, value); }
+    getAttribute(name) { return this.attributes.get(name) ?? null; }
+    addEventListener() {}
+  }
+  globalThis.document = { createElement: (tagName) => new Element(tagName) };
+  try {
+    const workbench = Object.create(Workbench.prototype);
+    workbench.instance = {
+      translate: (key) => ({
+        view: 'Ver',
+        help: 'Ayuda',
+        panels: 'Paneles',
+        togglePrimary: 'Barra lateral principal',
+        toggleSecondary: 'Barra lateral secundaria',
+        togglePanel: 'Panel inferior',
+        about: 'Acerca de Edy',
+      })[key] ?? key,
+      initialState: { showPanelVisibilityInMenu: true },
+      menus: { entries: () => [] },
+    };
+    workbench.primaryVisible = true;
+    workbench.secondaryVisible = false;
+    workbench.panelVisible = true;
+    workbench.openMenu = 'view';
+    const menuBar = new Element('nav');
+    workbench.renderMenus(menuBar);
+
+    const viewMenu = menuBar.children.find((wrapper) => wrapper.children[0].textContent === 'Ver');
+    const panelPopup = viewMenu.children[1];
+    const panelSubmenu = panelPopup.children[0].children[1];
+    const panelItems = panelSubmenu.children;
+    assert.deepEqual(panelItems.map((item) => item.getAttribute('aria-checked')), ['true', 'false', 'true']);
+    assert.deepEqual(panelItems.map((item) => item.children[1].textContent), [
+      'Barra lateral principal',
+      'Barra lateral secundaria',
+      'Panel inferior',
+    ]);
+    assert.equal(panelItems[0].children[0].style.visibility, 'visible');
+    assert.equal(panelItems[1].children[0].style.visibility, 'hidden');
+    assert.ok(panelItems.every((item) => item.getAttribute('role') === 'menuitemcheckbox'));
+  }
+  finally {
+    globalThis.document = previousDocument;
+  }
+});
+
+test('view menu can omit built-in panel visibility controls', () => {
+  const previousDocument = globalThis.document;
+  class Element {
+    constructor() {
+      this.children = [];
+      this.dataset = {};
+      this.classList = { add() {} };
+    }
+    append(...elements) { this.children.push(...elements); }
+    setAttribute() {}
+    replaceChildren(...elements) { this.children = elements; }
+  }
+  globalThis.document = { createElement: () => new Element() };
+  try {
+    const workbench = Object.create(Workbench.prototype);
+    workbench.instance = {
+      translate: (key) => key,
+      initialState: { showPanelVisibilityInMenu: false },
+      menus: { entries: () => [] },
+    };
+    workbench.primaryVisible = true;
+    workbench.secondaryVisible = true;
+    workbench.panelVisible = true;
+    workbench.openMenu = null;
+    const menuBar = new Element();
+    workbench.renderMenus(menuBar);
+    assert.deepEqual(menuBar.children.map((wrapper) => wrapper.children[0].textContent), ['help']);
+  }
+  finally {
+    globalThis.document = previousDocument;
+  }
+});
+
+test('configured panel titles label empty regions without replacing active view titles', () => {
+  const previousDocument = globalThis.document;
+  class Element {
+    constructor() {
+      this.children = [];
+      this.attributes = new Map();
+      this.dataset = {};
+      this.classList = { add() {} };
+    }
+    append(...elements) { this.children.push(...elements); }
+    setAttribute(name, value) { this.attributes.set(name, value); }
+  }
+  globalThis.document = { createElement: () => new Element() };
+  try {
+    const workbench = Object.create(Workbench.prototype);
+    workbench.instance = {
+      initialState: { bottomPanel: { title: 'Console' } },
+      views: { entries: () => [] },
+      translate: (key) => key,
+    };
+    const pane = workbench.renderPane('panel', 'Default panel', null);
+    assert.equal(pane.attributes.get('aria-label'), 'Console');
+    assert.equal(pane.children[0].children[0].textContent, 'Console');
+  }
+  finally {
+    globalThis.document = previousDocument;
+  }
 });
 
 test('activity buttons toggle the selected primary view without changing openView semantics', () => {

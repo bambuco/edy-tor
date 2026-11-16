@@ -21,7 +21,7 @@ const reusableRoots = new WeakMap();
 
 /**
  * Creates an independently configured Edy workbench.
- * @param {{container: HTMLElement, locale?: string, theme?: string, logo?: string, title?: string, customCss?: string, services?: Object, extensions?: Array}} options Instance options.
+ * @param {{container: HTMLElement, locale?: string, theme?: string, logo?: string, title?: string, customCss?: string, initialState?: Object, services?: Object, extensions?: Array}} options Instance options.
  * @returns {EdyInstance} Edy instance.
  */
 export function createEdy(options) {
@@ -43,14 +43,66 @@ export function createEdy(options) {
 }
 
 /**
+ * Validates and freezes the optional workbench initial state.
+ * @param {Object} initialState Initial UI configuration.
+ * @returns {Object} Normalized initial state.
+ */
+function normalizeInitialState(initialState = {}) {
+  const sections = ['primarySidebar', 'secondarySidebar', 'bottomPanel'];
+  const allowedKeys = new Set([...sections, 'preview', 'showPanelVisibilityInMenu']);
+  if (!initialState || typeof initialState !== 'object' || Array.isArray(initialState) ||
+      Object.keys(initialState).some((key) => !allowedKeys.has(key))) {
+    throw new TypeError('initialState must be an object with supported workbench settings.');
+  }
+  const normalized = {};
+  for (const section of sections) {
+    const config = initialState[section];
+    if (config === undefined) {
+      continue;
+    }
+    if (!config || typeof config !== 'object' || Array.isArray(config) ||
+        Object.keys(config).some((key) => !['visible', 'title'].includes(key))) {
+      throw new TypeError(`initialState.${section} must contain only visible and title settings.`);
+    }
+    if (config.visible !== undefined && typeof config.visible !== 'boolean') {
+      throw new TypeError(`initialState.${section}.visible must be a boolean.`);
+    }
+    if (config.title !== undefined && (typeof config.title !== 'string' || !config.title.trim())) {
+      throw new TypeError(`initialState.${section}.title must be a non-empty string.`);
+    }
+    normalized[section] = Object.freeze({
+      ...(config.visible === undefined ? {} : { visible: config.visible }),
+      ...(config.title === undefined ? {} : { title: config.title.trim() }),
+    });
+  }
+  const preview = initialState.preview;
+  if (preview !== undefined) {
+    if (!preview || typeof preview !== 'object' || Array.isArray(preview) ||
+        Object.keys(preview).some((key) => key !== 'visible') ||
+        (preview.visible !== undefined && typeof preview.visible !== 'boolean')) {
+      throw new TypeError('initialState.preview must contain only a boolean visible setting.');
+    }
+    normalized.preview = Object.freeze({
+      ...(preview.visible === undefined ? {} : { visible: preview.visible }),
+    });
+  }
+  if (initialState.showPanelVisibilityInMenu !== undefined &&
+      typeof initialState.showPanelVisibilityInMenu !== 'boolean') {
+    throw new TypeError('initialState.showPanelVisibilityInMenu must be a boolean.');
+  }
+  normalized.showPanelVisibilityInMenu = initialState.showPanelVisibilityInMenu ?? true;
+  return Object.freeze(normalized);
+}
+
+/**
  * Manages the lifecycle, registrations, and isolated UI for one Edy instance.
  */
 export class EdyInstance {
   /**
-   * @param {{container: HTMLElement, locale?: string, theme?: string, logo?: string, title?: string, customCss?: string, services?: Object, extensions?: Array}} options Instance options.
+   * @param {{container: HTMLElement, locale?: string, theme?: string, logo?: string, title?: string, customCss?: string, initialState?: Object, services?: Object, extensions?: Array}} options Instance options.
    * @param {ShadowRoot} [existingRoot] Previously disposed Edy root.
    */
-  constructor({ container, locale = 'en', theme = 'system', logo = new URL('../assets/edy-logo.svg', import.meta.url).href, title = 'Edy', customCss, services = {}, extensions = [] }, existingRoot) {
+  constructor({ container, locale = 'en', theme = 'system', logo = new URL('../assets/edy-logo.svg', import.meta.url).href, title = 'Edy', customCss, initialState, services = {}, extensions = [] }, existingRoot) {
     if (!Array.isArray(extensions)) {
       throw new TypeError('Extensions must be provided as an array.');
     }
@@ -69,6 +121,7 @@ export class EdyInstance {
     if (customCss !== undefined && (typeof customCss !== 'string' || !customCss.trim())) {
       throw new TypeError('The customCss must be a non-empty stylesheet URL string.');
     }
+    const normalizedInitialState = normalizeInitialState(initialState);
     const customCssUrl = customCss === undefined ? undefined : new URL(customCss, container.ownerDocument.baseURI).href;
     if (!services || typeof services !== 'object' || Array.isArray(services)) {
       throw new TypeError('Host services must be provided as an object.');
@@ -90,6 +143,7 @@ export class EdyInstance {
     this.logo = logo;
     this.title = title;
     this.customCss = customCssUrl;
+    this.initialState = normalizedInitialState;
     this.services = Object.freeze({ ...services });
     this.extensions = [...extensions];
     this.extensionStates = new Map();

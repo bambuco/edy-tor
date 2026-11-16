@@ -5,7 +5,7 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-import { createButton } from '../ui/controls.js';
+import { createButton, openDialog } from '../ui/controls.js';
 import { matchesShortcut, parseShortcut } from '../core/shortcuts.js';
 import { createIconElement, loadIconStylesheet } from '../ui/icons.js';
 import { createPreviewViewport } from '../ui/preview-viewport.js';
@@ -26,7 +26,7 @@ export class Workbench {
     this.activeSecondary = null;
     this.activePanel = null;
     this.activePreview = null;
-    this.previewVisible = false;
+    this.previewVisible = instance.initialState.preview?.visible ?? false;
     this.fullWindow = false;
     this.activeEditorView = null;
     this.activeDocument = null;
@@ -34,6 +34,10 @@ export class Workbench {
     this.primaryVisible = !compactLayout;
     this.secondaryVisible = !compactLayout;
     this.panelVisible = !compactLayout;
+    this.primaryVisible = instance.initialState.primarySidebar?.visible ?? this.primaryVisible;
+    this.secondaryVisible = instance.initialState.secondarySidebar?.visible ?? this.secondaryVisible;
+    this.panelVisible = instance.initialState.bottomPanel?.visible ?? this.panelVisible;
+    this.hasPreviewViews = false;
     this.primaryWidth = 240;
     this.secondaryWidth = 250;
     this.panelHeight = 210;
@@ -145,10 +149,13 @@ export class Workbench {
     this.renderMenus(header.querySelector('.edy-menubar'));
     const previewViews = instance.views.entries().filter(([, view]) => view.location === 'preview');
     if (!previewViews.length) {
-      this.previewVisible = false;
+      if (this.hasPreviewViews) {
+        this.previewVisible = false;
+      }
       this.activePreview = null;
     }
-    if (previewViews.length) {
+    else {
+      this.hasPreviewViews = true;
       const previewButton = this.actionButton({
         label: '◫',
         action: 'toggle-preview',
@@ -246,11 +253,17 @@ export class Workbench {
     const groups = new Map([
       ['file', []],
       ['edit', []],
-      ['view', [
-        { id: 'toggle-primary', label: translate('togglePrimary') },
-        { id: 'toggle-secondary', label: translate('toggleSecondary') },
-        { id: 'toggle-panel', label: translate('togglePanel') },
-      ]],
+      ['view', this.instance.initialState?.showPanelVisibilityInMenu !== false ? [
+        {
+          id: 'panels',
+          label: translate('panels'),
+          submenu: [
+            { id: 'toggle-primary', label: translate('togglePrimary'), checked: this.primaryVisible },
+            { id: 'toggle-secondary', label: translate('toggleSecondary'), checked: this.secondaryVisible },
+            { id: 'toggle-panel', label: translate('togglePanel'), checked: this.panelVisible },
+          ],
+        },
+      ] : []],
       ['help', [{ id: 'about', label: translate('about') }]],
     ]);
     for (const [, item] of this.instance.menus.entries()) {
@@ -406,6 +419,16 @@ export class Workbench {
     button.setAttribute('role', 'menuitem');
     button.classList.add('edy-menu__item');
     button.textContent = '';
+    if (item.checked !== undefined) {
+      button.setAttribute('role', 'menuitemcheckbox');
+      button.setAttribute('aria-checked', String(item.checked));
+      const check = createIconElement('check');
+      if (check) {
+        check.classList.add('edy-menu__check');
+        check.style.visibility = item.checked ? 'visible' : 'hidden';
+        button.append(check);
+      }
+    }
     const icon = createIconElement(item.icon);
     if (icon) {
       icon.classList.add('edy-menu__icon');
@@ -483,13 +506,17 @@ export class Workbench {
   renderPane(location, title, selectedId) {
     const section = document.createElement('section');
     section.className = `edy-pane edy-pane--${location}`;
-    section.setAttribute('aria-label', title);
+    const configuredTitle = location === 'primary' ? this.instance.initialState?.primarySidebar?.title
+      : location === 'secondary' ? this.instance.initialState?.secondarySidebar?.title
+        : location === 'panel' ? this.instance.initialState?.bottomPanel?.title
+          : undefined;
+    section.setAttribute('aria-label', configuredTitle ?? title);
     const views = this.instance.views.entries().filter(([, item]) => item.location === location);
     const selected = views.find(([id]) => id === selectedId) ?? views[0];
     const header = document.createElement('div');
     header.className = 'edy-pane__header';
     const heading = document.createElement('h2');
-    heading.textContent = selected?.[1].title ?? title;
+    heading.textContent = selected?.[1].title ?? configuredTitle ?? title;
     header.append(heading);
     if (location === 'panel' || location === 'secondary') {
       const closeLabel = this.instance.translate(location === 'panel' ? 'closePanel' : 'closeSecondary');
@@ -574,7 +601,9 @@ export class Workbench {
     }
     const surfaces = document.createElement('div');
     surfaces.className = 'edy-editor__surfaces';
-    surfaces.classList.toggle('is-split', this.previewVisible);
+    const previews = this.instance.views.entries().filter(([, view]) => view.location === 'preview');
+    const previewVisible = this.previewVisible && previews.length > 0;
+    surfaces.classList.toggle('is-split', previewVisible);
     const content = document.createElement('div');
     content.className = 'edy-editor__content';
     this.renderEditorContent(content);
@@ -584,8 +613,7 @@ export class Workbench {
     this.renderBreadcrumbs(breadcrumbs);
     editor.append(breadcrumbs);
     surfaces.append(content);
-    if (this.previewVisible) {
-      const previews = this.instance.views.entries().filter(([, view]) => view.location === 'preview');
+    if (previewVisible) {
       const selected = previews.find(([id]) => id === this.activePreview) ?? previews[0];
       if (selected) {
         this.activePreview = selected[0];
@@ -1143,7 +1171,18 @@ export class Workbench {
       this.updateLayout();
     }
     else if (action === 'about') {
-      this.instance.notify('Edy 0.1.0', 'info');
+      const content = document.createElement('div');
+      const description = document.createElement('p');
+      description.textContent = this.instance.translate('aboutDescription');
+      const version = document.createElement('p');
+      version.textContent = `${this.instance.translate('version')}: 0.1.0`;
+      content.append(description, version);
+      openDialog({
+        title: this.instance.translate('about'),
+        content,
+        closeLabel: this.instance.translate('close'),
+        container: this.shadow,
+      });
       this.openMenu = null;
       this.refreshMenuSurfaces();
     }

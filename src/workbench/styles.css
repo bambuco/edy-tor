@@ -193,6 +193,11 @@ iframe:focus-visible {
   line-height: 100%;
 }
 
+.edy-menu__check {
+  width: 1em;
+  text-align: center;
+}
+
 .edy-menu__item kbd {
   color: var(--edy-color-muted);
   font: inherit;

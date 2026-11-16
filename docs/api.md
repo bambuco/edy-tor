@@ -11,6 +11,29 @@ async `start()`, `activateExtension(id)`, `deactivateExtension(id)`, and
 `dispose()`. Expanded mode fills the browser viewport rather than invoking
 native browser fullscreen; Escape restores it.
 
+`initialState` optionally configures the initial visibility and fallback
+titles of the primary sidebar, secondary sidebar, and bottom panel. Each region
+accepts `{ visible?: boolean, title?: string }`; `preview` accepts
+`{ visible?: boolean }`. Unspecified panel/sidebar visibility follows the
+existing responsive default (visible on wide screens, hidden on compact
+screens), and preview defaults to hidden. A region title is used for its
+accessible name and as the heading when no view is selected; an active view's
+own title remains unchanged. A visible preview requires a registered preview
+view. `showPanelVisibilityInMenu` defaults to `true`;
+set it to `false` to omit the built-in panel/sidebar toggles from the `View`
+menu.
+
+```js
+createEdy({
+  container,
+  initialState: {
+    bottomPanel: { visible: false, title: 'Console' },
+    preview: { visible: true },
+    showPanelVisibilityInMenu: false,
+  },
+});
+```
+
 `logo` is an optional non-empty image URL string for the header, resolved
 relative to the host page when relative. Each instance can use a different
 logo; if omitted, Edy loads its bundled SVG from `src/assets/edy-logo.svg`.
