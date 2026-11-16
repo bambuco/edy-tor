@@ -21,7 +21,7 @@ const reusableRoots = new WeakMap();
 
 /**
  * Creates an independently configured Edy workbench.
- * @param {{container: HTMLElement, locale?: string, theme?: string, logo?: string, title?: string, services?: Object, extensions?: Array}} options Instance options.
+ * @param {{container: HTMLElement, locale?: string, theme?: string, logo?: string, title?: string, customCss?: string, services?: Object, extensions?: Array}} options Instance options.
  * @returns {EdyInstance} Edy instance.
  */
 export function createEdy(options) {
@@ -47,10 +47,10 @@ export function createEdy(options) {
  */
 export class EdyInstance {
   /**
-   * @param {{container: HTMLElement, locale?: string, theme?: string, logo?: string, title?: string, services?: Object, extensions?: Array}} options Instance options.
+   * @param {{container: HTMLElement, locale?: string, theme?: string, logo?: string, title?: string, customCss?: string, services?: Object, extensions?: Array}} options Instance options.
    * @param {ShadowRoot} [existingRoot] Previously disposed Edy root.
    */
-  constructor({ container, locale = 'en', theme = 'system', logo = new URL('../assets/edy-logo.svg', import.meta.url).href, title = 'Edy', services = {}, extensions = [] }, existingRoot) {
+  constructor({ container, locale = 'en', theme = 'system', logo = new URL('../assets/edy-logo.svg', import.meta.url).href, title = 'Edy', customCss, services = {}, extensions = [] }, existingRoot) {
     if (!Array.isArray(extensions)) {
       throw new TypeError('Extensions must be provided as an array.');
     }
@@ -66,6 +66,10 @@ export class EdyInstance {
     if (typeof title !== 'string' || !title.trim()) {
       throw new TypeError('The title must be a non-empty string.');
     }
+    if (customCss !== undefined && (typeof customCss !== 'string' || !customCss.trim())) {
+      throw new TypeError('The customCss must be a non-empty stylesheet URL string.');
+    }
+    const customCssUrl = customCss === undefined ? undefined : new URL(customCss, container.ownerDocument.baseURI).href;
     if (!services || typeof services !== 'object' || Array.isArray(services)) {
       throw new TypeError('Host services must be provided as an object.');
     }
@@ -85,6 +89,7 @@ export class EdyInstance {
     this.theme = theme;
     this.logo = logo;
     this.title = title;
+    this.customCss = customCssUrl;
     this.services = Object.freeze({ ...services });
     this.extensions = [...extensions];
     this.extensionStates = new Map();

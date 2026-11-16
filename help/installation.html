@@ -42,6 +42,7 @@ host document. The TinyMCE iframe and its runtime must be same-origin.</p>
     locale: &#39;en&#39;,
     theme: &#39;system&#39;,
     logo: &#39;/images/my-editor-logo.svg&#39;, // Optional; omit for the Edy logo.
+    customCss: &#39;./styles/edy.css&#39;, // Optional; resolved against the host document&#39;s base URL.
     services: {},
     extensions: [],
   });
@@ -56,7 +57,10 @@ same element can be used for a new instance. <code>start()</code> and <code>disp
 promises; handle rejected promises in production.
 The optional <code>logo</code> URL is relative to the host page, and can differ per
 instance. Deploy the bundled <code>src/assets/</code> directory with <code>src/</code> when using
-the default logo; its credits are in <code>src/assets/CREDITS.md</code>.</p>
+the default logo; its credits are in <code>src/assets/CREDITS.md</code>.
+The optional <code>customCss</code> stylesheet is loaded inside the editor&#39;s shadow root
+after the built-in styles. It can be a relative path, a root-relative path, or
+an absolute URL; see the API reference for its behavior and limitations.</p>
 <p>See <a href="./extensions.html">extensions</a> for useful contributions and
 <a href="./api.html">API reference</a> for options.</p>
 </main></div></body></html>

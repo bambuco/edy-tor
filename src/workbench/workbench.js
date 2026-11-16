@@ -58,6 +58,18 @@ export class Workbench {
     stylesheet.rel = 'stylesheet';
     stylesheet.href = new URL('./styles.css', import.meta.url).href;
     this.shadow.append(stylesheet);
+    if (instance.customCss !== undefined) {
+      this.customStylesheet = document.createElement('link');
+      this.customStylesheet.rel = 'stylesheet';
+      this.customStylesheet.href = instance.customCss;
+      this.handleCustomStylesheetError = () => {
+        if (!instance.disposed && !instance.disposing) {
+          instance.reportError(new Error(instance.customCss), instance.translate('customCssLoadFailed'));
+        }
+      };
+      this.customStylesheet.addEventListener('error', this.handleCustomStylesheetError, { once: true });
+      this.shadow.append(this.customStylesheet);
+    }
     this.app = document.createElement('div');
     this.app.id = 'edy-app';
     this.shadow.append(this.app);
@@ -1319,6 +1331,7 @@ export class Workbench {
     window.removeEventListener('pointerup', this.handlePointerUp);
     window.removeEventListener('pointercancel', this.handlePointerUp);
     this.themeQuery?.removeEventListener('change', this.handleThemeChange);
+    this.customStylesheet?.removeEventListener('error', this.handleCustomStylesheetError);
     this.shadow.replaceChildren();
   }
 }

@@ -59,6 +59,7 @@ const editor = createEdy({
   theme: 'system',
   logo: '/images/my-editor-logo.svg', // Optional; omit to use the bundled Edy logo.
   title: 'My Editor', // Optional; omit to use the default "Edy" title.
+  customCss: './styles/edy.css', // Optional stylesheet for this instance.
   services: {},
   extensions: [demoExtension],
 });
@@ -76,6 +77,8 @@ element can be mounted again with a new instance.
 The optional `logo` image URL and `title` string are resolved at runtime and can
 be different for each instance. Keep `src/assets/` when deploying the default
 logo; its source and licensing note are in [image credits](./src/assets/CREDITS.md).
+The optional `customCss` URL is resolved against the host document's base URL
+and loaded in the instance's shadow root after Edy's built-in styles.
 
 ## Extension contract
 

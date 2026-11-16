@@ -17,6 +17,15 @@ logo; if omitted, Edy loads its bundled SVG from `src/assets/edy-logo.svg`.
 The image is decorative beside the retained Edy text. Its source and licensing
 note are recorded in `src/assets/CREDITS.md`.
 
+`customCss` is an optional non-empty stylesheet URL. Relative paths such as
+`./styles/edy.css` resolve against the host document's base URL (including a
+`<base>` element); `/styles/edy.css` is relative to the origin, and absolute
+URLs are also supported. Edy loads it in the instance's shadow root after its
+built-in styles. Normal CSS cascade and specificity rules apply. Styles do not
+cross into embedded iframes, such as previews or rich-text editors. A loading
+failure is logged and shown as an error notification; Edy remains usable with
+its built-in styles. Each instance may use a different stylesheet.
+
 ## Extension context
 
 - `commands.register(id, { label, execute, enabled })`, `execute(id, ...args)`,

@@ -23,6 +23,14 @@ relative to the host page when relative. Each instance can use a different
 logo; if omitted, Edy loads its bundled SVG from <code>src/assets/edy-logo.svg</code>.
 The image is decorative beside the retained Edy text. Its source and licensing
 note are recorded in <code>src/assets/CREDITS.md</code>.</p>
+<p><code>customCss</code> is an optional non-empty stylesheet URL. Relative paths such as
+<code>./styles/edy.css</code> resolve against the host document&#39;s base URL (including a
+<code>&lt;base&gt;</code> element); <code>/styles/edy.css</code> is relative to the origin, and absolute
+URLs are also supported. Edy loads it in the instance&#39;s shadow root after its
+built-in styles. Normal CSS cascade and specificity rules apply. Styles do not
+cross into embedded iframes, such as previews or rich-text editors. A loading
+failure is logged and shown as an error notification; Edy remains usable with
+its built-in styles. Each instance may use a different stylesheet.</p>
 <h2>Extension context</h2>
 <ul>
 <li><code>commands.register(id, { label, execute, enabled })</code>, <code>execute(id, ...args)</code>,
