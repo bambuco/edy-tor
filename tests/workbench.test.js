@@ -285,55 +285,173 @@ test('configured panel titles label empty regions without replacing active view 
   }
 });
 
-test('activity buttons toggle the selected primary view without changing openView semantics', () => {
-  const views = new Map([
-    ['first', { location: 'primary' }],
-    ['second', { location: 'primary' }],
-  ]);
-  const workbench = Object.create(Workbench.prototype);
-  workbench.instance = { views: { entries: () => [...views], get: (id) => views.get(id) } };
-  workbench.activePrimary = null;
-  workbench.primaryVisible = true;
-  workbench.secondaryVisible = true;
-  workbench.panelVisible = true;
-  const hiddenClasses = new Set();
-  const buttons = ['first', 'second'].map((id) => ({
-    dataset: { action: 'toggle-primary-view', id },
-    setAttribute(name, value) { this[name] = value; },
-    closest() { return this; },
-  }));
-  workbench.shadow = { contains: () => true };
-  workbench.layout = {
-    classList: {
-      toggle(name, enabled) {
-        if (enabled) hiddenClasses.add(name);
-        else hiddenClasses.delete(name);
+test('activity and openView update only the primary pane and preserve other contributions', () => {
+  const previousDocument = globalThis.document;
+  const previousNode = globalThis.Node;
+  class Element {
+    constructor() {
+      this.children = [];
+      this.parent = null;
+      this.attributes = new Map();
+      this.dataset = {};
+      this.classes = new Set();
+      this.classList = {
+        add: (name) => this.classes.add(name),
+        toggle: (name, enabled) => enabled ? this.classes.add(name) : this.classes.delete(name),
+      };
+      this.style = { setProperty() {} };
+    }
+    append(...elements) {
+      for (const element of elements) {
+        if (element instanceof Fragment) {
+          this.append(...element.children.slice());
+          continue;
+        }
+        if (element.parent) {
+          element.parent.children.splice(element.parent.children.indexOf(element), 1);
+        }
+        element.parent = this;
+        this.children.push(element);
+      }
+    }
+    replaceWith(element) {
+      const parent = this.parent;
+      const index = parent.children.indexOf(this);
+      parent.children[index] = element;
+      element.parent = parent;
+      this.parent = null;
+    }
+    contains(element) {
+      return this === element || this.children.some((child) => child.contains(element));
+    }
+    setAttribute(name, value) { this.attributes.set(name, value); }
+    getAttribute(name) { return this.attributes.get(name); }
+    closest() { return this; }
+    querySelector(selector) {
+      if (selector === '.edy-pane--primary') {
+        return this.children.find((child) => child.className === 'edy-pane edy-pane--primary') ?? null;
+      }
+      if (selector === '.edy-menubar [data-action="toggle-primary"]') return this.menuItem ?? null;
+      if (selector === '.edy-menu__check') return this.check ?? null;
+      return null;
+    }
+    querySelectorAll() { return this.buttons ?? []; }
+  }
+  class Fragment extends Element {}
+  globalThis.Node = Element;
+  globalThis.document = { createElement: () => new Element() };
+  try {
+    const renders = { first: 0, second: 0 };
+    const disposals = { first: 0, second: 0, editor: 0, preview: 0, viewport: 0 };
+    const primary = (id) => ({
+      location: 'primary',
+      title: id,
+      render() {
+        renders[id]++;
+        return { element: new Element(), dispose: () => disposals[id]++ };
       },
-    },
-    style: { setProperty() {} },
-    querySelectorAll: () => buttons,
-  };
-  workbench.render = () => workbench.updateLayout();
-  const click = (button) => workbench.handleClick({ target: button });
+    });
+    const views = new Map([['first', primary('first')], ['second', primary('second')]]);
+    const workbench = Object.create(Workbench.prototype);
+    workbench.instance = {
+      views: { entries: () => [...views], get: (id) => views.get(id) },
+      translate: (key) => key,
+      reportError: (error) => { throw error; },
+    };
+    workbench.activePrimary = null;
+    workbench.primaryVisible = true;
+    workbench.secondaryVisible = true;
+    workbench.panelVisible = true;
+    workbench.contributionCache = new Map();
+    workbench.renderedContributions = new Set();
+    workbench.previewViewport = { dispose: () => disposals.viewport++ };
+    workbench.layout = new Element();
+    workbench.shadow = { contains: () => true };
+    workbench.render = () => { throw new Error('Full workbench render is not expected'); };
+    const buttons = ['first', 'second'].map((id) => {
+      const button = new Element();
+      button.dataset = { action: 'toggle-primary-view', id };
+      return button;
+    });
+    workbench.layout.buttons = buttons;
+    workbench.layout.menuItem = new Element();
+    workbench.layout.menuItem.check = new Element();
+    const editor = new Element();
+    const preview = new Element();
+    const editorContribution = { title: 'editor', render: () => ({
+      element: new Element(), dispose: () => disposals.editor++,
+    }) };
+    const previewContribution = { title: 'preview', render: () => ({
+      element: new Element(), dispose: () => disposals.preview++,
+    }) };
+    workbench.layout.append(workbench.renderPane('primary', 'primarySidebar', null), editor, preview);
+    workbench.renderContribution(editor, editorContribution);
+    workbench.renderContribution(preview, previewContribution);
+    const editorContent = editor.children[0];
+    const previewContent = preview.children[0];
+    const initialPane = workbench.layout.children[0];
+    const click = (button) => workbench.handleClick({ target: button });
 
-  workbench.updateLayout();
-  assert.equal(buttons[0]['aria-pressed'], 'true');
-  click(buttons[0]);
-  assert.equal(workbench.primaryVisible, false);
-  assert.equal(hiddenClasses.has('is-primary-hidden'), true);
-  assert.equal(buttons[0]['aria-pressed'], 'false');
-  click(buttons[0]);
-  assert.equal(workbench.primaryVisible, true);
-  assert.equal(buttons[0]['aria-pressed'], 'true');
-  click(buttons[1]);
-  assert.equal(workbench.activePrimary, 'second');
-  assert.equal(buttons[0]['aria-pressed'], 'false');
-  assert.equal(buttons[1]['aria-pressed'], 'true');
-  workbench.openView('second');
-  assert.equal(workbench.primaryVisible, true);
-  click(buttons[1]);
-  assert.equal(workbench.primaryVisible, false);
-  workbench.openView('second');
-  assert.equal(workbench.primaryVisible, true);
-  assert.equal(buttons[1]['aria-pressed'], 'true');
+    workbench.updateLayout();
+    assert.equal(buttons[0].getAttribute('aria-pressed'), 'true');
+    click(buttons[0]);
+    assert.equal(workbench.layout.classes.has('is-primary-hidden'), true);
+    assert.equal(workbench.layout.menuItem.getAttribute('aria-checked'), 'false');
+    assert.equal(workbench.layout.menuItem.check.style.visibility, 'hidden');
+    click(buttons[0]);
+    assert.equal(workbench.layout.children[0], initialPane);
+    assert.equal(workbench.layout.menuItem.getAttribute('aria-checked'), 'true');
+    assert.equal(workbench.layout.menuItem.check.style.visibility, 'visible');
+    assert.deepEqual(renders, { first: 1, second: 0 });
+
+    click(buttons[1]);
+    assert.equal(workbench.activePrimary, 'second');
+    assert.notEqual(workbench.layout.children[0], initialPane);
+    assert.equal(workbench.layout.children[0].children[0].children[0].textContent, 'second');
+    assert.equal(buttons[0].getAttribute('aria-pressed'), 'false');
+    assert.equal(buttons[1].getAttribute('aria-pressed'), 'true');
+    assert.deepEqual(disposals, { first: 1, second: 0, editor: 0, preview: 0, viewport: 0 });
+    workbench.openView('second');
+    click(buttons[1]);
+    workbench.openView('second');
+    assert.equal(workbench.primaryVisible, true);
+    assert.deepEqual(renders, { first: 1, second: 1 });
+    assert.equal(workbench.layout.children[1], editor);
+    assert.equal(workbench.layout.children[2], preview);
+    assert.equal(editor.children[0], editorContent);
+    assert.equal(preview.children[0], previewContent);
+    workbench.openView('first');
+    assert.deepEqual(renders, { first: 2, second: 1 });
+    assert.deepEqual(disposals, { first: 1, second: 1, editor: 0, preview: 0, viewport: 0 });
+    click(buttons[0]);
+    click(buttons[1]);
+    assert.equal(workbench.primaryVisible, true);
+    assert.equal(workbench.layout.children[0].children[0].children[0].textContent, 'second');
+    workbench.openView('first');
+
+    let fragmentDisposals = 0;
+    views.set('fragment', {
+      location: 'primary',
+      title: 'fragment',
+      render() {
+        const element = new Fragment();
+        element.append(new Element());
+        return { element, dispose: () => fragmentDisposals++ };
+      },
+    });
+    workbench.openView('fragment');
+    workbench.openView('second');
+    assert.equal(fragmentDisposals, 1);
+    workbench.activeEditorContribution = views.get('second');
+    workbench.renderContribution(editor, workbench.activeEditorContribution);
+    const secondDisposals = disposals.second;
+    workbench.openView('first');
+    assert.equal(disposals.second, secondDisposals);
+    assert.equal(workbench.contributionCache.has(workbench.activeEditorContribution), true);
+    assert.throws(() => workbench.openView('missing'), /not registered/);
+  }
+  finally {
+    globalThis.document = previousDocument;
+    globalThis.Node = previousNode;
+  }
 });

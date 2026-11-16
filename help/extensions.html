@@ -43,7 +43,10 @@ the extension and automatically disposed. Add other disposables to
 <code>panel</code>, <code>editor</code> or <code>preview</code> locations. Renderers return a DOM node or
 <code>{ element, dispose }</code>. Open a view with <code>context.views.open(&#39;explorer&#39;)</code>.
 Primary activity buttons use the provided icon, or the title&#39;s first
-character if no icon is provided. Icons may use a standard key such as <code>robot</code>
+character if no icon is provided. Clicking the active button hides or shows
+the primary sidebar without unmounting its view. Selecting a different primary
+view replaces the previous one without remounting the editor or preview.
+Icons may use a standard key such as <code>robot</code>
 or <code>card</code>, a direct Font Awesome class list such as <code>fa-solid fa-robot</code>, or a
 single-character glyph. Unknown class lists are passed through without
 validation. The same values are accepted by menu items, accordion actions, and

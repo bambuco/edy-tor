@@ -485,6 +485,14 @@ export class Workbench {
     for (const button of this.layout.querySelectorAll('.edy-activity [data-action="toggle-primary-view"]')) {
       button.setAttribute('aria-pressed', String(this.primaryVisible && button.dataset.id === activePrimary));
     }
+    const primaryMenuItem = this.layout.querySelector('.edy-menubar [data-action="toggle-primary"]');
+    if (primaryMenuItem) {
+      primaryMenuItem.setAttribute('aria-checked', String(this.primaryVisible));
+      const check = primaryMenuItem.querySelector('.edy-menu__check');
+      if (check) {
+        check.style.visibility = this.primaryVisible ? 'visible' : 'hidden';
+      }
+    }
   }
 
   /**
@@ -1040,11 +1048,25 @@ export class Workbench {
       this.previewVisible = true;
     }
     else {
-      if (this.activePrimary === id && this.primaryVisible) {
+      const previousId = this.selectedPrimaryView();
+      if (previousId === id && this.primaryVisible) {
+        this.activePrimary = id;
         return;
       }
       this.activePrimary = id;
       this.primaryVisible = true;
+      if (previousId !== id) {
+        const pane = this.layout.querySelector('.edy-pane--primary');
+        const previous = this.instance.views.get(previousId);
+        const replacement = this.renderPane('primary', this.instance.translate('primarySidebar'), id);
+        pane.replaceWith(replacement);
+        if (previous && previous !== view && previous !== this.activeEditorContribution) {
+          this.renderedContributions.delete(previous);
+          this.disposeRenderResources();
+        }
+      }
+      this.updateLayout();
+      return;
     }
     this.render();
   }

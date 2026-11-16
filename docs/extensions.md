@@ -37,7 +37,10 @@ Pass `extensions: [tools]` to `createEdy`. Views use `primary`, `secondary`,
 `panel`, `editor` or `preview` locations. Renderers return a DOM node or
 `{ element, dispose }`. Open a view with `context.views.open('explorer')`.
 Primary activity buttons use the provided icon, or the title's first
-character if no icon is provided. Icons may use a standard key such as `robot`
+character if no icon is provided. Clicking the active button hides or shows
+the primary sidebar without unmounting its view. Selecting a different primary
+view replaces the previous one without remounting the editor or preview.
+Icons may use a standard key such as `robot`
 or `card`, a direct Font Awesome class list such as `fa-solid fa-robot`, or a
 single-character glyph. Unknown class lists are passed through without
 validation. The same values are accepted by menu items, accordion actions, and
