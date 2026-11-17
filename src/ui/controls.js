@@ -845,7 +845,7 @@ export function createForm({ fields, onSubmit, onCancel, translate, onError = co
     else {
       input = document.createElement('input');
       input.type = field.type === 'switch' ? 'checkbox' : (field.type ?? 'text');
-      if (field.type === 'switch') {
+      if (field.type === 'checkbox' || field.type === 'switch') {
         input.setAttribute('role', 'switch');
       }
     }
@@ -877,16 +877,27 @@ export function createForm({ fields, onSubmit, onCancel, translate, onError = co
     const label = document.createElement('label');
     label.htmlFor = inputId;
     label.textContent = field.label ?? translate(field.name);
-    wrapper.append(label);
+    const isToggle = field.type === 'checkbox' || field.type === 'switch';
+    if (isToggle) {
+      wrapper.className = 'edy-form__field edy-form__field--switch';
+      const toggle = document.createElement('div');
+      toggle.className = 'edy-form__switch';
+      toggle.append(input, label);
+      wrapper.append(toggle);
+    }
+    else {
+      wrapper.append(label);
+    }
     if (field.help) {
       const help = document.createElement('span');
       help.className = 'edy-form__help';
       help.id = `${inputId}-help`;
       help.textContent = field.help;
       input.setAttribute('aria-describedby', help.id);
-      wrapper.append(input, help);
+      if (isToggle) wrapper.append(help);
+      else wrapper.append(input, help);
     }
-    else {
+    else if (!isToggle) {
       wrapper.append(input);
     }
     const error = document.createElement('span');

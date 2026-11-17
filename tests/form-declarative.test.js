@@ -201,6 +201,30 @@ test('input-select fields reject invalid schemas', () => {
   });
 });
 
+test('checkbox and switch fields render as left-aligned switches with labels on the right', () => {
+  withDocument(({ nodes }) => {
+    createForm({
+      translate: (key) => key,
+      onSubmit() {},
+      fields: [
+        { name: 'enabled', type: 'checkbox', label: 'Enabled', value: true },
+        { name: 'preview', type: 'switch', label: 'Preview', help: 'Preview the result' },
+      ],
+    });
+    const enabled = nodes.find((node) => node.name === 'enabled');
+    const preview = nodes.find((node) => node.name === 'preview');
+    const rows = nodes.filter((node) => node.className === 'edy-form__switch');
+    assert.equal(enabled.type, 'checkbox');
+    assert.equal(enabled.attributes.role, 'switch');
+    assert.equal(preview.attributes.role, 'switch');
+    assert.equal(rows.length, 2);
+    assert.equal(rows[0].children[0], enabled);
+    assert.equal(rows[0].children[1].textContent, 'Enabled');
+    assert.equal(rows[1].children[0], preview);
+    assert.equal(rows[1].children[1].textContent, 'Preview');
+  });
+});
+
 test('sortable values can be added, edited, moved and removed, including in collapsed groups', () => {
   withDocument(({ nodes, focused }) => {
     const submitted = [];

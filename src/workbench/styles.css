@@ -821,6 +821,63 @@ iframe:focus-visible {
   min-width: 0;
 }
 
+.edy-form__field--switch {
+  justify-items: start;
+}
+
+.edy-form__switch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.edy-form__switch label {
+  cursor: pointer;
+}
+
+.edy-form__switch input[type="checkbox"] {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  min-width: 36px;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  border-radius: 999px;
+  border-color: var(--edy-color-muted);
+  background: color-mix(in srgb, var(--edy-color-muted) 45%, var(--edy-color-background));
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.edy-form__switch input[type="checkbox"]::before {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  content: "";
+  background: var(--edy-color-background);
+  border-radius: 50%;
+  transition: transform 120ms ease;
+}
+
+.edy-form__switch input[type="checkbox"]:checked {
+  border-color: var(--edy-color-accent);
+  background: var(--edy-color-accent);
+}
+
+.edy-form__switch input[type="checkbox"]:checked::before {
+  transform: translateX(16px);
+}
+
+.edy-form__switch input[type="checkbox"]:disabled,
+.edy-form__switch input[type="checkbox"]:disabled + label {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
 .edy-form__field--icon {
   display: block;
 }
