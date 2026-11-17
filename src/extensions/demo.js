@@ -7,7 +7,9 @@
 
 import { createButton, createButtonGroup, createForm, createList, openDialog } from '../ui/controls.js';
 import { createPreviewFrame } from '../core/preview.js';
+import { createFileExplorer } from '../ui/file-explorer.js';
 import { iconAliases } from '../ui/icons.js';
+import { DemoFileExplorerProvider } from './demo-file-provider.js';
 
 /**
  * Demonstrates a trusted extension contributing commands, views, menus, forms, and status.
@@ -27,6 +29,7 @@ export const demoExtension = {
     const t = context.translate;
     let previewText = t('welcomeText');
     let activePreview = null;
+    const demoFiles = new DemoFileExplorerProvider();
     const updatePreview = () => {
       activePreview?.postMessage({ operation: 'update', payload: { text: previewText } });
     };
@@ -78,25 +81,32 @@ export const demoExtension = {
           id: 'files',
           title: t('files'),
           height: 2,
-          actions: [
-            { icon: 'plus', label: t('newFile'), onClick: () => context.notifications.info(t('sampleAction')) },
-            { icon: 'ellipsis', label: t('moreActions'), menu: [
-              { label: t('showMessage'), onClick: () => context.ui.confirm(t('sampleAction')) },
-            ] },
-          ],
-          render: () => createList([
-            {
-              id: 'project',
-              label: t('treeGroup'),
-              icon: '📁',
-              children: [
-                { id: 'src', label: 'src', icon: '📁', children: [{ id: 'index', label: 'index.html', icon: '📄' }] },
-                { id: 'readme', label: 'README.md', icon: '📄' },
-              ],
+          render: () => createFileExplorer({
+            provider: demoFiles,
+            translate: t,
+            accept: ['image/*', '.html', '.css', '.md'],
+            maxFileSize: 5 * 1024 * 1024,
+            multiple: true,
+            operations: { view: true },
+            viewDestination: 'editor',
+            confirm: (message) => context.ui.confirm(message),
+            onOpen: (item, { url }) => {
+              context.notifications.info(
+                t('demoFileOpen').replace('{name}', item.name).replace('{url}', url),
+              );
+              return 'host';
             },
-          ], {
-            tree: true,
-            onSelect: (item) => context.notifications.info(item.label),
+            customOperations: [{
+              id: 'edit',
+              label: t('fileEdit'),
+              icon: 'pencil',
+              visible: (item) => item.type === 'file',
+              execute: async (item, { replace }) => {
+                await replace(`${item.name}\nEdited in the demo.`);
+                context.notifications.success(t('demoFileEdited').replace('{name}', item.name));
+              },
+            }],
+            onError: (error) => context.notifications.error(error),
           }),
         },
         {

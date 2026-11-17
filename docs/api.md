@@ -57,7 +57,9 @@ its built-in styles. Each instance may use a different stylesheet.
 - `views.register(id, { title, location, icon, render, viewport })`, `open(id)`.
   Activity-bar `icon` accepts a character, a standard key such as `robot` or
   `card`, or direct Font Awesome classes such as `fa-solid fa-robot`.
-- `documents.open(id, { title, render })`, `close(id)`.
+- `documents.open(id, { title, render })`, `close(id)`, `activate(id)`.
+  `activate` returns `true` when the registered document was focused and
+  `false` when it does not exist.
 - `breadcrumbs.set({ type, id }, items)`, `clear({ type, id })`.
 - `menus.register(menuId, { id, label, commandId, icon, shortcut, order })`.
   Menu and accordion `icon` values use the same aliases or direct Font Awesome
@@ -306,6 +308,120 @@ context.views.register('settings', {
   }),
 });
 ```
+
+## File explorer activity
+
+`FileExplorerProvider`, `createFileExplorer`, and `registerFileExplorer` provide
+a reusable primary-sidebar file explorer. The provider adapts Edy to a host's
+filesystem, CMS, object store, or other source; Edy does not access files
+directly.
+
+```js
+import { FileExplorerProvider, registerFileExplorer } from '@edy/core';
+
+class ProjectFiles extends FileExplorerProvider {
+  constructor(project) {
+    super({
+      createFile: true, createFolder: true, rename: true,
+      delete: true, move: true, replace: true,
+    });
+    this.project = project;
+  }
+
+  async list(folderId, { signal }) {
+    return this.project.list(folderId, { signal });
+  }
+
+  async createFile(folderId, file, { signal }) {
+    await this.project.upload(folderId, file, { signal });
+  }
+
+  async createFolder(parentId, name, { signal }) {
+    await this.project.createFolder(parentId, name, { signal });
+  }
+
+  async rename(id, name, { signal }) {
+    await this.project.rename(id, name, { signal });
+  }
+
+  async delete(id, { signal }) {
+    await this.project.delete(id, { signal });
+  }
+
+  async move(id, destinationFolderId, { signal }) {
+    await this.project.move(id, destinationFolderId, { signal });
+  }
+
+  async replace(id, replacement, { signal }) {
+    await this.project.replace(id, replacement, { signal });
+  }
+
+  async getUrl(id, { signal }) {
+    return this.project.getUrl(id, { signal });
+  }
+}
+
+registerFileExplorer(context, {
+  id: 'project-files',
+  title: 'Project files',
+  provider: new ProjectFiles(project),
+  accept: ['image/*', '.pdf'],
+  maxFileSize: 10 * 1024 * 1024,
+  clickBehavior: 'select',
+  viewDestination: 'editor',
+  operations: { view: true, delete: false },
+  onOpen: (item, { url, intent, destination }) => {
+    openProjectFile(item, url, { intent, destination });
+    return 'host';
+  },
+  customOperations: [{
+    id: 'share',
+    label: 'Share',
+    execute: (item, { signal }) => project.share(item.id, { signal }),
+  }],
+});
+```
+
+`list(parentId, { signal })` returns an array of entries:
+`{ id, name, type: 'file' | 'folder', size?, mimeType? }`. Use `null` for the
+provider root. IDs are opaque and stable; Edy passes them back to provider
+methods and does not interpret paths. `getUrl(id, { signal })` returns a URL or
+string. The default viewer safely displays supported images, audio/video, PDF,
+and text formats. URLs with credentials and schemes other than HTTP(S)/blob
+are rejected. `viewDestination: 'editor'` opens a viewer tab; `'dialog'` opens
+it in a floating Edy dialog. `onOpen(item, { url, intent, destination })` may
+return `'default'` to use that viewer or `'host'` to let the host handle the
+file. The callback also runs for the configured click behavior `'open'`.
+`clickBehavior: 'select'` selects a file by default; `'open'` delegates the
+single click to `onOpen`. When `operations.view` is enabled, double-clicking a
+file performs the separate `view` intent. `canView(item)` can restrict that
+operation per file or authorize a host-specific viewer.
+
+`FileExplorerProvider` supplies optional mutation methods that reject by
+default. Declare implemented operations as `true` in its constructor
+capabilities. Supported mutations are `createFile`, `createFolder`, `rename`,
+`delete`, `move`, and `replace`; `operations` can further disable them.
+`readOnly: true` disables every mutation. The UI only offers operations enabled
+by both the provider and configuration, but the provider must still authorize
+and validate every request. In particular, it must prevent moving a folder
+into its descendants and reject destination name conflicts.
+
+The overflow menu offers supported per-entry operations and optional
+`customOperations`. Each custom operation has an `id`, `label`, optional icon,
+optional `visible(item)` and `enabled(item)` predicates, and an
+`execute(item, { signal, replace })` callback. The `replace(data)` callback
+submits editor-provided content through the provider's `replace` method.
+`replace` also supports selecting an uploaded replacement file. Providers
+receive `{ source: 'upload' | 'edited-content', data }` and decide how to store
+it. Folder rows expand lazily into a tree; files and folders can be moved by
+drag-and-drop or the move operation.
+
+`accept` is an optional array of MIME types, MIME wildcards, or filename
+extensions, and `multiple` allows selecting more than one file per upload.
+`maxFileSize` is an optional per-file limit in bytes. Edy checks these settings
+for user feedback; the provider must enforce actual file types and size limits.
+The host can also use the `replaceEdited(id, data)` method returned by
+`createFileExplorer`. Edy does not impose a storage model or generate file URLs.
 
 ## Preview frame
 

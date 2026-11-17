@@ -149,4 +149,36 @@ permanently unmounting a contribution to abort outstanding requests; stale
 results are ignored even if a provider does not honor the signal. Untrusted
 previews must not receive the service or host credentials.</p>
 <p>See <a href="./preview.html">live preview</a> and <a href="./api.html">API reference</a>.</p>
+<h2>Reusable file explorer</h2>
+<p>Use the exported <code>FileExplorerProvider</code> adapter base and
+<code>registerFileExplorer(context, options)</code> helper to add a host-backed Files
+activity without rebuilding its UI. The host implements only the operations
+and URL resolution appropriate to its storage system. Unsupported provider
+operations reject by default; see the <a href="./api.html#file-explorer-activity">API reference</a>
+for the method contract and configuration.</p>
+<p>The helper registers a <code>primary</code> view with the supplied activity icon. Configure
+<code>accept</code>, <code>maxFileSize</code>, <code>multiple</code>, <code>operations</code>, <code>readOnly</code>, <code>clickBehavior</code>,
+<code>viewDestination</code>, and <code>customOperations</code> to shape the available controls.
+Operation flags in configuration can restrict provider capabilities but cannot
+grant missing capabilities. The provider remains the authority for permissions,
+file validation, quotas, moves, replacement, deletion semantics, and
+persistence. File and folder operations are available in each row&#39;s overflow
+menu; folders expand as a tree and support drag-and-drop moves.</p>
+<p>The default click action selects a file. Set <code>clickBehavior: &#39;open&#39;</code> to delegate
+single clicks through <code>onOpen(item, { url, intent, destination })</code>. The callback
+returns <code>&#39;host&#39;</code> when the host handles it or <code>&#39;default&#39;</code> to use Edy&#39;s viewer.
+Enable <code>operations.view</code> for a separate double-click &quot;View&quot; operation, and
+choose <code>&#39;editor&#39;</code> or <code>&#39;dialog&#39;</code> for its destination. Edy&#39;s built-in viewer
+supports common images, audio/video, PDF, and text formats; hosts can supply
+their own per-file policy with <code>canView</code>.</p>
+<p>Optional <code>customOperations</code> add menu commands with item metadata and an abort
+signal. Their <code>execute(item, { signal, replace })</code> callback can ask the provider
+to persist edited content through <code>replace</code>. The provider also receives
+<code>{ source: &#39;upload&#39; | &#39;edited-content&#39;, data }</code> when an uploaded file or edited
+content replaces an existing file.</p>
+<p>The standalone and host examples use <code>DemoFileExplorerProvider</code>, an in-memory
+fixture with simulated create, rename, delete, move, replace, upload-metadata,
+and URL responses. It never reads local files or uploads file contents. Its
+initial project entries and changes exist only for the lifetime of the
+extension.</p>
 </main></div></body></html>

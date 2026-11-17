@@ -1031,6 +1031,199 @@ iframe:focus-visible {
   margin-inline-end: 6px;
 }
 
+.edy-file-explorer {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.edy-file-explorer__toolbar,
+.edy-file-explorer__breadcrumb {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-bottom: 1px solid var(--edy-color-border);
+}
+
+.edy-file-explorer__toolbar {
+  flex-wrap: wrap;
+}
+
+.edy-file-explorer__toolbar .edy-button,
+.edy-file-explorer__breadcrumb .edy-button {
+  min-width: 0;
+}
+
+.edy-file-explorer__toolbar-action {
+  width: 32px;
+  justify-content: center;
+  padding-inline: 4px;
+}
+
+.edy-file-explorer__toolbar-action .edy-icon {
+  margin-right: 0;
+}
+
+.edy-file-explorer__breadcrumb {
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.edy-file-explorer__content,
+.edy-file-explorer__tree {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.edy-file-explorer__tree,
+.edy-file-explorer__children {
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+}
+
+.edy-file-explorer__entry {
+  display: block;
+  min-width: 0;
+}
+
+.edy-file-explorer__row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  border-radius: 3px;
+}
+
+.edy-file-explorer__children {
+  margin-inline-start: 12px;
+  padding-block: 0;
+  padding-inline-end: 0;
+  border-inline-start: 1px solid var(--edy-color-border);
+}
+
+.edy-file-explorer__folder-toggle {
+  flex: 0 0 auto;
+  padding-inline: 5px;
+  padding-right: 0;
+}
+
+.edy-file-explorer__operations > .edy-button {
+  padding-inline: 5px;
+}
+
+.edy-file-explorer__entry-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-align: start;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 80%;
+}
+
+.edy-file-explorer__entry-name[aria-selected="true"] {
+  background: color-mix(in srgb, var(--edy-color-accent) 16%, transparent);
+}
+
+.edy-file-explorer__operations {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.edy-file-explorer__menu {
+  position: fixed;
+  z-index: 20;
+  display: grid;
+  min-width: 150px;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100vh - 16px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+  background: var(--edy-color-surface);
+  border: 1px solid var(--edy-color-border);
+  box-shadow: 0 3px 12px #0003;
+}
+
+.edy-file-explorer__menu[hidden] {
+  display: none;
+}
+
+.edy-file-explorer__menu .edy-button {
+  justify-content: flex-start;
+  text-align: start;
+}
+
+.edy-file-explorer__entry.is-dragging {
+  opacity: 0.5;
+}
+
+.edy-file-explorer__entry.is-drop-target > .edy-file-explorer__row {
+  outline: 2px solid var(--edy-color-accent);
+  outline-offset: -2px;
+}
+
+.edy-file-explorer__tree-status,
+.edy-file-explorer__move-status {
+  padding: 4px 8px;
+  color: var(--edy-color-muted);
+}
+
+.edy-file-explorer__size {
+  flex: 0 0 auto;
+  color: var(--edy-color-muted);
+  font-size: 10px;
+}
+
+.edy-file-explorer__status {
+  flex: 0 0 auto;
+  margin: 4px 8px;
+  color: var(--edy-color-muted);
+}
+
+.edy-file-explorer__editor {
+  flex: 0 0 auto;
+}
+
+.edy-file-explorer__name-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+}
+
+.edy-file-explorer__name-form input {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+.edy-file-viewer {
+  display: block;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 240px;
+  border: 0;
+}
+
+img.edy-file-viewer,
+video.edy-file-viewer {
+  object-fit: contain;
+}
+
+audio.edy-file-viewer {
+  align-self: center;
+  max-width: 100%;
+}
+
 .edy-empty {
   color: var(--edy-color-muted);
 }

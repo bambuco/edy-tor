@@ -481,6 +481,12 @@ export class EdyInstance {
           return resource;
         },
         close: (id) => this.documents.remove(publicId(id)),
+        activate: (id) => {
+          const documentId = publicId(id);
+          if (!this.documents.get(documentId)) return false;
+          this.workbench.openDocument(documentId);
+          return true;
+        },
       }),
       breadcrumbs: Object.freeze({
         set: (target, items) => {

@@ -78,6 +78,17 @@ test('closed documents discard paths and reopened documents start with an empty 
   assert.equal(instance.breadcrumbs.document.size, 0);
 });
 
+test('document activation focuses an existing document without registering another one', () => {
+  const instance = createInstance();
+  const opened = [];
+  instance.workbench.openDocument = (id) => opened.push(id);
+  const { context } = createContext(instance, 'first');
+  assert.equal(context.documents.activate('page'), false);
+  context.documents.open('page', { title: 'Page' });
+  assert.equal(context.documents.activate('page'), true);
+  assert.deepEqual(opened, ['first:page', 'first:page']);
+});
+
 function withDocument(run) {
   const previous = globalThis.document;
   const shadow = { activeElement: null };

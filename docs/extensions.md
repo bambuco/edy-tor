@@ -161,3 +161,41 @@ results are ignored even if a provider does not honor the signal. Untrusted
 previews must not receive the service or host credentials.
 
 See [live preview](./preview.md) and [API reference](./api.md).
+
+## Reusable file explorer
+
+Use the exported `FileExplorerProvider` adapter base and
+`registerFileExplorer(context, options)` helper to add a host-backed Files
+activity without rebuilding its UI. The host implements only the operations
+and URL resolution appropriate to its storage system. Unsupported provider
+operations reject by default; see the [API reference](./api.md#file-explorer-activity)
+for the method contract and configuration.
+
+The helper registers a `primary` view with the supplied activity icon. Configure
+`accept`, `maxFileSize`, `multiple`, `operations`, `readOnly`, `clickBehavior`,
+`viewDestination`, and `customOperations` to shape the available controls.
+Operation flags in configuration can restrict provider capabilities but cannot
+grant missing capabilities. The provider remains the authority for permissions,
+file validation, quotas, moves, replacement, deletion semantics, and
+persistence. File and folder operations are available in each row's overflow
+menu; folders expand as a tree and support drag-and-drop moves.
+
+The default click action selects a file. Set `clickBehavior: 'open'` to delegate
+single clicks through `onOpen(item, { url, intent, destination })`. The callback
+returns `'host'` when the host handles it or `'default'` to use Edy's viewer.
+Enable `operations.view` for a separate double-click "View" operation, and
+choose `'editor'` or `'dialog'` for its destination. Edy's built-in viewer
+supports common images, audio/video, PDF, and text formats; hosts can supply
+their own per-file policy with `canView`.
+
+Optional `customOperations` add menu commands with item metadata and an abort
+signal. Their `execute(item, { signal, replace })` callback can ask the provider
+to persist edited content through `replace`. The provider also receives
+`{ source: 'upload' | 'edited-content', data }` when an uploaded file or edited
+content replaces an existing file.
+
+The standalone and host examples use `DemoFileExplorerProvider`, an in-memory
+fixture with simulated create, rename, delete, move, replace, upload-metadata,
+and URL responses. It never reads local files or uploads file contents. Its
+initial project entries and changes exist only for the lifetime of the
+extension.

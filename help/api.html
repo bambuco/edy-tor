@@ -59,7 +59,9 @@ its built-in styles. Each instance may use a different stylesheet.</p>
 <li><code>views.register(id, { title, location, icon, render, viewport })</code>, <code>open(id)</code>.
 Activity-bar <code>icon</code> accepts a character, a standard key such as <code>robot</code> or
 <code>card</code>, or direct Font Awesome classes such as <code>fa-solid fa-robot</code>.</li>
-<li><code>documents.open(id, { title, render })</code>, <code>close(id)</code>.</li>
+<li><code>documents.open(id, { title, render })</code>, <code>close(id)</code>, <code>activate(id)</code>.
+<code>activate</code> returns <code>true</code> when the registered document was focused and
+<code>false</code> when it does not exist.</li>
 <li><code>breadcrumbs.set({ type, id }, items)</code>, <code>clear({ type, id })</code>.</li>
 <li><code>menus.register(menuId, { id, label, commandId, icon, shortcut, order })</code>.
 Menu and accordion <code>icon</code> values use the same aliases or direct Font Awesome
@@ -271,6 +273,112 @@ context.views.register(&#39;settings&#39;, {
   }),
 });
 </code></pre>
+<h2>File explorer activity</h2>
+<p><code>FileExplorerProvider</code>, <code>createFileExplorer</code>, and <code>registerFileExplorer</code> provide
+a reusable primary-sidebar file explorer. The provider adapts Edy to a host&#39;s
+filesystem, CMS, object store, or other source; Edy does not access files
+directly.</p>
+<pre><code class="language-js">import { FileExplorerProvider, registerFileExplorer } from &#39;@edy/core&#39;;
+
+class ProjectFiles extends FileExplorerProvider {
+  constructor(project) {
+    super({
+      createFile: true, createFolder: true, rename: true,
+      delete: true, move: true, replace: true,
+    });
+    this.project = project;
+  }
+
+  async list(folderId, { signal }) {
+    return this.project.list(folderId, { signal });
+  }
+
+  async createFile(folderId, file, { signal }) {
+    await this.project.upload(folderId, file, { signal });
+  }
+
+  async createFolder(parentId, name, { signal }) {
+    await this.project.createFolder(parentId, name, { signal });
+  }
+
+  async rename(id, name, { signal }) {
+    await this.project.rename(id, name, { signal });
+  }
+
+  async delete(id, { signal }) {
+    await this.project.delete(id, { signal });
+  }
+
+  async move(id, destinationFolderId, { signal }) {
+    await this.project.move(id, destinationFolderId, { signal });
+  }
+
+  async replace(id, replacement, { signal }) {
+    await this.project.replace(id, replacement, { signal });
+  }
+
+  async getUrl(id, { signal }) {
+    return this.project.getUrl(id, { signal });
+  }
+}
+
+registerFileExplorer(context, {
+  id: &#39;project-files&#39;,
+  title: &#39;Project files&#39;,
+  provider: new ProjectFiles(project),
+  accept: [&#39;image/*&#39;, &#39;.pdf&#39;],
+  maxFileSize: 10 * 1024 * 1024,
+  clickBehavior: &#39;select&#39;,
+  viewDestination: &#39;editor&#39;,
+  operations: { view: true, delete: false },
+  onOpen: (item, { url, intent, destination }) =&gt; {
+    openProjectFile(item, url, { intent, destination });
+    return &#39;host&#39;;
+  },
+  customOperations: [{
+    id: &#39;share&#39;,
+    label: &#39;Share&#39;,
+    execute: (item, { signal }) =&gt; project.share(item.id, { signal }),
+  }],
+});
+</code></pre>
+<p><code>list(parentId, { signal })</code> returns an array of entries:
+<code>{ id, name, type: &#39;file&#39; | &#39;folder&#39;, size?, mimeType? }</code>. Use <code>null</code> for the
+provider root. IDs are opaque and stable; Edy passes them back to provider
+methods and does not interpret paths. <code>getUrl(id, { signal })</code> returns a URL or
+string. The default viewer safely displays supported images, audio/video, PDF,
+and text formats. URLs with credentials and schemes other than HTTP(S)/blob
+are rejected. <code>viewDestination: &#39;editor&#39;</code> opens a viewer tab; <code>&#39;dialog&#39;</code> opens
+it in a floating Edy dialog. <code>onOpen(item, { url, intent, destination })</code> may
+return <code>&#39;default&#39;</code> to use that viewer or <code>&#39;host&#39;</code> to let the host handle the
+file. The callback also runs for the configured click behavior <code>&#39;open&#39;</code>.
+<code>clickBehavior: &#39;select&#39;</code> selects a file by default; <code>&#39;open&#39;</code> delegates the
+single click to <code>onOpen</code>. When <code>operations.view</code> is enabled, double-clicking a
+file performs the separate <code>view</code> intent. <code>canView(item)</code> can restrict that
+operation per file or authorize a host-specific viewer.</p>
+<p><code>FileExplorerProvider</code> supplies optional mutation methods that reject by
+default. Declare implemented operations as <code>true</code> in its constructor
+capabilities. Supported mutations are <code>createFile</code>, <code>createFolder</code>, <code>rename</code>,
+<code>delete</code>, <code>move</code>, and <code>replace</code>; <code>operations</code> can further disable them.
+<code>readOnly: true</code> disables every mutation. The UI only offers operations enabled
+by both the provider and configuration, but the provider must still authorize
+and validate every request. In particular, it must prevent moving a folder
+into its descendants and reject destination name conflicts.</p>
+<p>The overflow menu offers supported per-entry operations and optional
+<code>customOperations</code>. Each custom operation has an <code>id</code>, <code>label</code>, optional icon,
+optional <code>visible(item)</code> and <code>enabled(item)</code> predicates, and an
+<code>execute(item, { signal, replace })</code> callback. The <code>replace(data)</code> callback
+submits editor-provided content through the provider&#39;s <code>replace</code> method.
+<code>replace</code> also supports selecting an uploaded replacement file. Providers
+receive <code>{ source: &#39;upload&#39; | &#39;edited-content&#39;, data }</code> and decide how to store
+it. Folder rows expand lazily into a tree; files and folders can be moved by
+drag-and-drop or the move operation.</p>
+<p><code>accept</code> is an optional array of MIME types, MIME wildcards, or filename
+extensions, and <code>multiple</code> allows selecting more than one file per upload.
+<code>maxFileSize</code> is an optional per-file limit in bytes. Edy checks these settings
+for user feedback; the provider must enforce actual file types and size limits.
+The host can also use the <code>replaceEdited(id, data)</code> method returned by
+<code>createFileExplorer</code>. Edy does not impose a storage model or generate file URLs.</p>
 <h2>Preview frame</h2>
 <p><code>createPreviewFrame({ src, title, allowedOrigin, sandbox, operations, validateMessage })</code> returns <code>{ element, postMessage, onMessage, dispose }</code>.
 <code>onMessage</code> returns a disposable subscription. <code>postMessage</code> accepts an object

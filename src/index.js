@@ -9,6 +9,12 @@ export { createEdy } from './core/instance.js';
 export { createPreviewFrame } from './core/preview.js';
 export { createAccordion } from './ui/accordion.js';
 export {
+  createFileViewer,
+  createFileExplorer,
+  FileExplorerProvider,
+  registerFileExplorer,
+} from './ui/file-explorer.js';
+export {
   createIconElement,
   iconAliases,
   loadIconStylesheet,
