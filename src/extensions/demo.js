@@ -173,6 +173,32 @@ export const demoExtension = {
             },
             { name: 'count', label: t('count'), type: 'number', min: 0, value: 1 },
             {
+              name: 'measurement',
+              label: t('measurement'),
+              type: 'input-select',
+              inputType: 'number',
+              min: 0,
+              selectLabel: t('unit'),
+              value: { input: '7', selected: 'kg' },
+              options: [
+                { value: 'kg', label: t('kilograms') },
+                { value: 'g', label: t('grams') },
+                { value: 'mg', label: t('milligrams') },
+              ],
+            },
+            {
+              name: 'task',
+              label: t('task'),
+              type: 'input-select',
+              selectLabel: t('taskStatus'),
+              value: { input: t('requestQuote'), selected: 'pending' },
+              options: [
+                { value: 'pending', label: t('pending') },
+                { value: 'running', label: t('running') },
+                { value: 'completed', label: t('completed') },
+              ],
+            },
+            {
               name: 'kind',
               label: t('type'),
               type: 'select',
@@ -225,7 +251,7 @@ export const demoExtension = {
               visibleWhen: { field: 'layout', equals: 'preview' },
             },
           ],
-          onSubmit: (values) => context.notifications.success(`${t('formApplied')} ${t('iconPicker')}: ${values.icon}; ${t('htmlEditor')}: ${values.html}${values.asset ? `; ${t('assetExample')}: ${values.asset.join(', ')}` : ''}`),
+          onSubmit: (values) => context.notifications.success(`${t('formApplied')} ${t('measurement')}: ${values.measurement.input} ${values.measurement.selected}; ${t('taskStatus')}: ${values.task.selected}; ${t('iconPicker')}: ${values.icon}; ${t('htmlEditor')}: ${values.html}${values.asset ? `; ${t('assetExample')}: ${values.asset.join(', ')}` : ''}`),
           onCancel: () => context.notifications.info(t('cancel')),
         });
         const formLabel = document.createElement('h3');

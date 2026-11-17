@@ -104,6 +104,103 @@ test('visibility retains values, clears errors and focuses the first visible inv
   });
 });
 
+test('input-select fields submit combined values and validate both controls', () => {
+  withDocument(({ nodes, focused }) => {
+    const submitted = [];
+    let validated;
+    const form = createForm({
+      translate: (key) => key,
+      fields: [{
+        name: 'weight',
+        label: 'Weight',
+        type: 'input-select',
+        inputType: 'number',
+        required: true,
+        min: 0,
+        step: '0.1',
+        selectLabel: 'Weight unit',
+        value: { input: '', selected: 'kg' },
+        options: [
+          { value: 'kg', label: 'Kilos' },
+          { value: 'g', label: 'Grams' },
+        ],
+        validate: (value) => {
+          validated = value;
+          return value.input === '13' && value.selected === 'g' ? 'Unexpected measure.' : '';
+        },
+      }, {
+        name: 'details',
+        visibleWhen: (values) => values.weight.selected === 'g',
+      }, {
+        name: 'fixed',
+        type: 'input-select',
+        disabled: true,
+        value: { input: 'Locked', selected: 'yes' },
+        options: [{ value: 'yes', label: 'Yes' }],
+      }],
+      onSubmit: (value) => submitted.push(value),
+    });
+    const input = nodes.find((node) => node.name === 'weight');
+    const select = nodes.find((node) => node.name === 'weight-selected');
+    assert.equal(input.type, 'number');
+    assert.equal(input.min, '0');
+    assert.equal(input.step, '0.1');
+    assert.equal(select.attributes['aria-label'], 'Weight unit');
+    assert.equal(select.value, 'kg');
+    const row = nodes.find((node) => node.tag === 'div' && node.className === 'edy-form__input-select');
+    assert.deepEqual(row.children, [input, select]);
+
+    form.fire('submit');
+    assert.equal(focused(), input);
+    assert.equal(input.attributes['aria-invalid'], 'true');
+    assert.equal(submitted.length, 0);
+
+    input.value = '7';
+    input.fire('input');
+    select.value = '';
+    select.fire('change');
+    form.fire('submit');
+    assert.equal(focused(), select);
+    select.value = 'g';
+    select.fire('change');
+    form.fire('submit');
+    assert.deepEqual(submitted, [{
+      weight: { input: '7', selected: 'g' },
+      details: '',
+      fixed: { input: 'Locked', selected: 'yes' },
+    }]);
+    assert.deepEqual(validated, { input: '7', selected: 'g' });
+    const fixedInput = nodes.find((node) => node.name === 'fixed');
+    const fixedSelect = nodes.find((node) => node.name === 'fixed-selected');
+    assert.equal(fixedInput.disabled, true);
+    assert.equal(fixedSelect.disabled, true);
+
+    input.value = '13';
+    input.fire('input');
+    form.fire('submit');
+    assert.equal(submitted.length, 1);
+    assert.equal(input.attributes['aria-invalid'], 'true');
+  });
+});
+
+test('input-select fields reject invalid schemas', () => {
+  withDocument(() => {
+    const options = [{ value: 'kg', label: 'Kilos' }];
+    const create = (field) => createForm({
+      translate: (key) => key,
+      onSubmit() {},
+      fields: [{ name: 'weight', type: 'input-select', options, ...field }],
+    });
+    assert.throws(() => create({ inputType: 'email' }), /Input-select field/);
+    assert.throws(() => create({ options: [] }), /Input-select field/);
+    assert.throws(() => create({ options: [options[0], options[0]] }), /Input-select field/);
+    assert.throws(() => create({ value: { input: 7, selected: 'missing' } }), /Input-select field/);
+    assert.throws(() => create({ selectLabel: '' }), /Input-select field/);
+    assert.throws(() => create({ min: 0 }), /Input-select field/);
+    assert.throws(() => create({ inputType: 'number', minLength: 2 }), /Input-select field/);
+  });
+});
+
 test('sortable values can be added, edited, moved and removed, including in collapsed groups', () => {
   withDocument(({ nodes, focused }) => {
     const submitted = [];
@@ -250,4 +347,6 @@ test('CodeMirror rejects unknown languages and reports iframe loading failures',
 test('field hidden CSS overrides its display rules', async () => {
   const css = await readFile(new URL('../src/workbench/styles.css', import.meta.url), 'utf8');
   assert.match(css, /\.edy-form__field\[hidden\]\s*\{\s*display:\s*none;/);
+  assert.match(css, /\.edy-form__input-select\s*\{\s*display:\s*grid;/);
+  assert.match(css, /grid-template-columns:\s*minmax\(0, 1fr\) minmax\(110px, max-content\)/);
 });

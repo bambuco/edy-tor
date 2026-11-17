@@ -112,8 +112,8 @@ decorative icon node; <code>loadIconStylesheet(root)</code> loads its Font Aweso
 styles into a document or shadow root. <code>iconAliases</code> is a read-only object of
 standard names to Font Awesome classes.</p>
 <p><code>createForm</code> supports native <code>color</code>, <code>date</code>, <code>range</code>, <code>switch</code>, and other
-standard fields, plus the <code>icon</code>, <code>tinymce</code>, <code>codemirror</code>, <code>sortable</code>, <code>asset</code>, and
-<code>table</code> fields:</p>
+standard fields, plus the <code>input-select</code>, <code>icon</code>, <code>tinymce</code>, <code>codemirror</code>,
+<code>sortable</code>, <code>asset</code>, and <code>table</code> fields:</p>
 <pre><code class="language-js">createForm({
   translate: context.translate,
   onError: (error) =&gt; context.notifications.error(error),
@@ -125,6 +125,45 @@ standard fields, plus the <code>icon</code>, <code>tinymce</code>, <code>codemir
   ],
   onSubmit: ({ icon, content }) =&gt; console.log(icon, content),
 });
+</code></pre>
+<p><code>input-select</code> combines a text or number input with an adjacent select. Use
+<code>inputType: &#39;text&#39;</code> (the default) or <code>inputType: &#39;number&#39;</code>, and provide
+non-empty, uniquely valued options. <code>selectLabel</code> supplies the list&#39;s accessible
+name independently from the visible field label.</p>
+<pre><code class="language-js">{
+  name: &#39;weight&#39;,
+  label: &#39;Weight&#39;,
+  type: &#39;input-select&#39;,
+  inputType: &#39;number&#39;,
+  min: 0,
+  step: &#39;0.1&#39;,
+  selectLabel: &#39;Weight unit&#39;,
+  value: { input: &#39;7&#39;, selected: &#39;kg&#39; },
+  options: [
+    { value: &#39;kg&#39;, label: &#39;Kilograms&#39; },
+    { value: &#39;g&#39;, label: &#39;Grams&#39; },
+    { value: &#39;mg&#39;, label: &#39;Milligrams&#39; },
+  ],
+}
+</code></pre>
+<p>The field submits <code>{ input: string, selected: string }</code>, including for numeric
+inputs. Both elements support <code>disabled</code>. <code>required</code> requires both a value and
+a selection. Number inputs accept <code>min</code>, <code>max</code>, and <code>step</code>; text inputs accept
+<code>minLength</code> and <code>maxLength</code>. <code>validate</code> receives the combined value. Standard
+help, errors, <code>visibleWhen</code>, and group behavior apply to the complete control.</p>
+<p>The same field can combine descriptive text with a state:</p>
+<pre><code class="language-js">{
+  name: &#39;task&#39;,
+  type: &#39;input-select&#39;,
+  label: &#39;Task&#39;,
+  selectLabel: &#39;Status&#39;,
+  value: { input: &#39;Request quote&#39;, selected: &#39;pending&#39; },
+  options: [
+    { value: &#39;pending&#39;, label: &#39;Pending&#39; },
+    { value: &#39;running&#39;, label: &#39;In progress&#39; },
+    { value: &#39;completed&#39;, label: &#39;Completed&#39; },
+  ],
+}
 </code></pre>
 <p>Icon options contain a string value and label. Rendered values may be standard
 keys from <code>iconAliases</code> or Font Awesome classes. The example extension builds

@@ -809,6 +809,18 @@ iframe:focus-visible {
   margin: 0;
 }
 
+.edy-form__input-select {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(110px, max-content);
+  gap: 6px;
+  align-items: stretch;
+}
+
+.edy-form__input-select input,
+.edy-form__input-select select {
+  min-width: 0;
+}
+
 .edy-form__field--icon {
   display: block;
 }

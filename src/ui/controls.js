@@ -228,7 +228,8 @@ export function createForm({ fields, onSubmit, onCancel, translate, onError = co
   const supportedTypes = new Set([
     'text', 'search', 'email', 'url', 'tel', 'password', 'number', 'range',
     'date', 'time', 'datetime-local', 'month', 'week', 'color',
-    'textarea', 'select', 'checkbox', 'radio', 'switch', 'tinymce', 'codemirror', 'icon', 'sortable', 'table', 'asset',
+    'textarea', 'select', 'input-select', 'checkbox', 'radio', 'switch',
+    'tinymce', 'codemirror', 'icon', 'sortable', 'table', 'asset',
   ]);
   let disposed = false;
   const definitions = [];
@@ -269,6 +270,82 @@ export function createForm({ fields, onSubmit, onCancel, translate, onError = co
     let input;
     let inputs = [];
     let editorState;
+    if (field.type === 'input-select') {
+      const inputType = field.inputType ?? 'text';
+      const options = field.options;
+      const initial = field.value ?? { input: '', selected: options?.[0]?.value ?? '' };
+      if (!['text', 'number'].includes(inputType) ||
+          (inputType === 'text' && (field.min !== undefined || field.max !== undefined ||
+            field.step !== undefined)) ||
+          (inputType === 'number' && (field.minLength !== undefined || field.maxLength !== undefined)) ||
+          !Array.isArray(options) || !options.length ||
+          options.some((option) => !option || typeof option.value !== 'string' || !option.value.trim() ||
+            typeof option.label !== 'string' || !option.label.trim()) ||
+          new Set(options.map((option) => option.value)).size !== options.length ||
+          !initial || typeof initial !== 'object' || Array.isArray(initial) ||
+          !Object.hasOwn(initial, 'input') || !Object.hasOwn(initial, 'selected') ||
+          !['string', 'number'].includes(typeof initial.input) ||
+          typeof initial.selected !== 'string' ||
+          !options.some((option) => option.value === initial.selected) ||
+          (field.selectLabel !== undefined &&
+            (typeof field.selectLabel !== 'string' || !field.selectLabel.trim()))) {
+        throw new TypeError(`Input-select field "${field.name}" requires text or number input, unique options, and valid initial values.`);
+      }
+      wrapper.className = 'edy-form__field edy-form__field--input-select';
+      const label = document.createElement('label');
+      label.htmlFor = inputId;
+      label.textContent = field.label ?? translate(field.name);
+      const controlsRow = document.createElement('div');
+      controlsRow.className = 'edy-form__input-select';
+      input = document.createElement('input');
+      input.id = inputId;
+      input.name = field.name;
+      input.type = inputType;
+      input.value = String(initial.input);
+      input.disabled = Boolean(field.disabled);
+      input.required = Boolean(field.required);
+      if (field.min !== undefined) input.min = String(field.min);
+      if (field.max !== undefined) input.max = String(field.max);
+      if (field.step !== undefined) input.step = String(field.step);
+      if (field.minLength !== undefined) input.minLength = field.minLength;
+      if (field.maxLength !== undefined) input.maxLength = field.maxLength;
+      const select = document.createElement('select');
+      select.id = `${inputId}-select`;
+      select.name = `${field.name}-selected`;
+      select.disabled = Boolean(field.disabled);
+      select.required = Boolean(field.required);
+      select.setAttribute('aria-label', field.selectLabel ?? label.textContent);
+      for (const option of options) {
+        const element = document.createElement('option');
+        element.value = option.value;
+        element.textContent = option.label;
+        select.append(element);
+      }
+      select.value = initial.selected;
+      const error = document.createElement('span');
+      error.className = 'edy-form__error';
+      error.id = `${inputId}-error`;
+      error.setAttribute('aria-live', 'polite');
+      for (const control of [input, select]) control.setAttribute('aria-errormessage', error.id);
+      controlsRow.append(input, select);
+      wrapper.append(label, controlsRow);
+      if (field.help) {
+        const help = document.createElement('span');
+        help.className = 'edy-form__help';
+        help.id = `${inputId}-help`;
+        help.textContent = field.help;
+        for (const control of [input, select]) control.setAttribute('aria-describedby', help.id);
+        wrapper.append(help);
+      }
+      wrapper.append(error);
+      container.append(wrapper);
+      inputs = [input, select];
+      controls.set(field.name, {
+        field, input, inputs, error, wrapper, group, composite: true,
+        focusTarget: () => inputs.find((control) => !control.checkValidity()) ?? input,
+      });
+      continue;
+    }
     if (field.type === 'asset') {
       const multiple = field.multiple ?? false;
       const accept = field.accept ?? [];
@@ -794,6 +871,9 @@ export function createForm({ fields, onSubmit, onCancel, translate, onError = co
     if (field.maxLength !== undefined) {
       input.maxLength = field.maxLength;
     }
+    if (field.step !== undefined) {
+      input.step = String(field.step);
+    }
     const label = document.createElement('label');
     label.htmlFor = inputId;
     label.textContent = field.label ?? translate(field.name);
@@ -1008,6 +1088,7 @@ export function createForm({ fields, onSubmit, onCancel, translate, onError = co
       message = translate('codeEditorLoadFailed');
     }
     else if (field.required && (value === '' || value === false ||
+        (entry.composite && (value.input === '' || value.selected === '')) ||
         (entry.sortableState && !value.some((item) => item.trim())) ||
         (entry.tableState && !value.length) ||
         (entry.assetState && !value.length) ||
@@ -1040,6 +1121,9 @@ export function createForm({ fields, onSubmit, onCancel, translate, onError = co
    * @returns {*} Field value.
    */
   function readValue(entry) {
+    if (entry.composite) {
+      return { input: entry.inputs[0].value, selected: entry.inputs[1].value };
+    }
     if (entry.sortableState) return [...entry.sortableState.values];
     if (entry.tableState) return entry.tableState.rows.map((row) => ({ ...row }));
     if (entry.assetState) return [...entry.assetState.ids];

@@ -120,8 +120,8 @@ styles into a document or shadow root. `iconAliases` is a read-only object of
 standard names to Font Awesome classes.
 
 `createForm` supports native `color`, `date`, `range`, `switch`, and other
-standard fields, plus the `icon`, `tinymce`, `codemirror`, `sortable`, `asset`, and
-`table` fields:
+standard fields, plus the `input-select`, `icon`, `tinymce`, `codemirror`,
+`sortable`, `asset`, and `table` fields:
 
 ```js
 createForm({
@@ -135,6 +135,52 @@ createForm({
   ],
   onSubmit: ({ icon, content }) => console.log(icon, content),
 });
+```
+
+`input-select` combines a text or number input with an adjacent select. Use
+`inputType: 'text'` (the default) or `inputType: 'number'`, and provide
+non-empty, uniquely valued options. `selectLabel` supplies the list's accessible
+name independently from the visible field label.
+
+```js
+{
+  name: 'weight',
+  label: 'Weight',
+  type: 'input-select',
+  inputType: 'number',
+  min: 0,
+  step: '0.1',
+  selectLabel: 'Weight unit',
+  value: { input: '7', selected: 'kg' },
+  options: [
+    { value: 'kg', label: 'Kilograms' },
+    { value: 'g', label: 'Grams' },
+    { value: 'mg', label: 'Milligrams' },
+  ],
+}
+```
+
+The field submits `{ input: string, selected: string }`, including for numeric
+inputs. Both elements support `disabled`. `required` requires both a value and
+a selection. Number inputs accept `min`, `max`, and `step`; text inputs accept
+`minLength` and `maxLength`. `validate` receives the combined value. Standard
+help, errors, `visibleWhen`, and group behavior apply to the complete control.
+
+The same field can combine descriptive text with a state:
+
+```js
+{
+  name: 'task',
+  type: 'input-select',
+  label: 'Task',
+  selectLabel: 'Status',
+  value: { input: 'Request quote', selected: 'pending' },
+  options: [
+    { value: 'pending', label: 'Pending' },
+    { value: 'running', label: 'In progress' },
+    { value: 'completed', label: 'Completed' },
+  ],
+}
 ```
 
 Icon options contain a string value and label. Rendered values may be standard
