@@ -179,11 +179,11 @@ export class EdyInstance {
       if (!this.workbench) {
         return;
       }
-      this.workbench.refreshDocumentTabs();
       if (this.workbench.activeDocument && !this.documents.get(this.workbench.activeDocument)) {
         this.workbench.activeDocument = null;
         this.workbench.refreshEditorContent();
       }
+      this.workbench.refreshDocumentTabs();
     });
     this.commands = new Registry(() => this.workbench?.refreshCommandUi());
     this.menus = new Registry(() => this.workbench?.refreshMenuSurfaces());

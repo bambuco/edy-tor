@@ -810,6 +810,24 @@ export class Workbench {
       this.activeEditorContribution = null;
       this.renderWelcome(content);
     }
+    this.announceEditorTab();
+  }
+
+  /**
+   * Tells the host which editor tab is active so it can restore it later.
+   * @returns {void}
+   */
+  announceEditorTab() {
+    const container = this.instance.container;
+    if (!container || typeof container.dispatchEvent !== 'function' || typeof CustomEvent === 'undefined') {
+      return;
+    }
+    container.dispatchEvent(new CustomEvent('edy-editor-tab', {
+      detail: {
+        viewId: this.activeDocument ? null : this.activeEditorView,
+        documentId: this.activeDocument || null,
+      },
+    }));
   }
 
   /**
