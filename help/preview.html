@@ -16,7 +16,9 @@ stack the two surfaces. Extensions own the document model, preview renderer,
 and synchronization. <code>context.views.open(&#39;preview-id&#39;)</code> opens a registered
 preview programmatically. If several preview views are registered, users can
 select them in the preview pane.
-The editor and preview scroll independently, while editor tabs remain visible.</p>
+The editor and preview scroll independently, while editor tabs remain visible.
+The editor and preview have independent visibility controls. Hiding both leaves
+the central workspace empty without collapsing its layout area.</p>
 <h2>Optional size and scale controls</h2>
 <p>Set <code>viewport</code> on a preview view to let Edy wrap its rendered node in a
 configurable logical viewport. Width and height are CSS pixels; visual zoom

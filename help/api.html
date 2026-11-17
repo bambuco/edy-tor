@@ -20,19 +20,20 @@ async <code>start()</code>, <code>activateExtension(id)</code>, <code>deactivate
 native browser fullscreen; Escape restores it.</p>
 <p><code>initialState</code> optionally configures the initial visibility and fallback
 titles of the primary sidebar, secondary sidebar, and bottom panel. Each region
-accepts <code>{ visible?: boolean, title?: string }</code>; <code>preview</code> accepts
+accepts <code>{ visible?: boolean, title?: string }</code>; <code>editor</code> and <code>preview</code> accept
 <code>{ visible?: boolean }</code>. Unspecified panel/sidebar visibility follows the
 existing responsive default (visible on wide screens, hidden on compact
-screens), and preview defaults to hidden. A region title is used for its
-accessible name and as the heading when no view is selected; an active view&#39;s
-own title remains unchanged. A visible preview requires a registered preview
-view. <code>showPanelVisibilityInMenu</code> defaults to <code>true</code>;
+screens); the editor defaults to visible and preview defaults to hidden. A
+region title is used for its accessible name and as the heading when no view is
+selected; an active view&#39;s own title remains unchanged. A visible preview
+requires a registered preview view. <code>showPanelVisibilityInMenu</code> defaults to <code>true</code>;
 set it to <code>false</code> to omit the built-in panel/sidebar toggles from the <code>View</code>
 menu.</p>
 <pre><code class="language-js">createEdy({
   container,
   initialState: {
     bottomPanel: { visible: false, title: &#39;Console&#39; },
+    editor: { visible: false },
     preview: { visible: true },
     showPanelVisibilityInMenu: false,
   },

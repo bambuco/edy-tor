@@ -26,6 +26,7 @@ export class Workbench {
     this.activeSecondary = null;
     this.activePanel = null;
     this.activePreview = null;
+    this.editorVisible = instance.initialState.editor?.visible ?? true;
     this.previewVisible = instance.initialState.preview?.visible ?? false;
     this.fullWindow = false;
     this.activeEditorView = null;
@@ -137,6 +138,18 @@ export class Workbench {
     main.classList.toggle('is-primary-hidden', !this.primaryVisible);
     main.classList.toggle('is-secondary-hidden', !this.secondaryVisible);
     main.classList.toggle('is-panel-hidden', !this.panelVisible);
+    main.classList.toggle('is-editor-hidden', !this.editorVisible);
+    const previewViews = instance.views.entries().filter(([, view]) => view.location === 'preview');
+    if (!previewViews.length) {
+      if (this.hasPreviewViews) {
+        this.previewVisible = false;
+      }
+      this.activePreview = null;
+    }
+    else {
+      this.hasPreviewViews = true;
+    }
+    const previewVisible = this.previewVisible && previewViews.length > 0;
 
     const header = document.createElement('header');
     header.className = 'edy-header';
@@ -147,15 +160,16 @@ export class Workbench {
     logo.src = instance.logo;
     header.querySelector('.edy-brand').prepend(logo);
     this.renderMenus(header.querySelector('.edy-menubar'));
-    const previewViews = instance.views.entries().filter(([, view]) => view.location === 'preview');
-    if (!previewViews.length) {
-      if (this.hasPreviewViews) {
-        this.previewVisible = false;
-      }
-      this.activePreview = null;
-    }
-    else {
-      this.hasPreviewViews = true;
+    const editorLabel = translate('toggleEditorArea');
+    const editorButton = this.actionButton({
+      label: '▤',
+      action: 'toggle-editor-area',
+      title: editorLabel,
+      pressed: this.editorVisible,
+    });
+    editorButton.setAttribute('aria-label', editorLabel);
+    header.append(editorButton);
+    if (previewViews.length) {
       const previewButton = this.actionButton({
         label: '◫',
         action: 'toggle-preview',
@@ -200,7 +214,14 @@ export class Workbench {
 
     main.append(this.renderPane('primary', translate('primarySidebar'), this.activePrimary));
     main.append(this.resizeHandle('horizontal', 'primary'));
-    main.append(this.renderEditor());
+    const workspace = document.createElement('div');
+    workspace.className = 'edy-editor-workspace';
+    workspace.classList.toggle('is-split', previewVisible);
+    workspace.append(this.renderEditor());
+    if (previewVisible) {
+      workspace.append(this.renderPreview(previewViews));
+    }
+    main.append(workspace);
     main.append(this.resizeHandle('horizontal', 'secondary'));
     main.append(this.renderPane('secondary', translate('secondarySidebar'), this.activeSecondary));
     main.append(this.resizeHandle('vertical', 'panel'));
@@ -478,6 +499,7 @@ export class Workbench {
     this.layout.classList.toggle('is-primary-hidden', !this.primaryVisible);
     this.layout.classList.toggle('is-secondary-hidden', !this.secondaryVisible);
     this.layout.classList.toggle('is-panel-hidden', !this.panelVisible);
+    this.layout.classList.toggle('is-editor-hidden', !this.editorVisible);
     this.layout.style.setProperty('--edy-primary-width', `${this.primaryWidth}px`);
     this.layout.style.setProperty('--edy-secondary-width', `${this.secondaryWidth}px`);
     this.layout.style.setProperty('--edy-panel-height', `${this.panelHeight}px`);
@@ -607,77 +629,77 @@ export class Workbench {
     if (tabs.childElementCount) {
       editor.append(tabs);
     }
-    const surfaces = document.createElement('div');
-    surfaces.className = 'edy-editor__surfaces';
-    const previews = this.instance.views.entries().filter(([, view]) => view.location === 'preview');
-    const previewVisible = this.previewVisible && previews.length > 0;
-    surfaces.classList.toggle('is-split', previewVisible);
-    const content = document.createElement('div');
-    content.className = 'edy-editor__content';
-    this.renderEditorContent(content);
     const breadcrumbs = document.createElement('nav');
     breadcrumbs.className = 'edy-editor__breadcrumbs';
     breadcrumbs.setAttribute('aria-label', this.instance.translate('breadcrumbs'));
     this.renderBreadcrumbs(breadcrumbs);
     editor.append(breadcrumbs);
-    surfaces.append(content);
-    if (previewVisible) {
-      const selected = previews.find(([id]) => id === this.activePreview) ?? previews[0];
-      if (selected) {
-        this.activePreview = selected[0];
-        const preview = document.createElement('section');
-        preview.className = 'edy-editor__preview';
-        preview.setAttribute('aria-label', selected[1].title);
-        const header = document.createElement('div');
-        header.className = 'edy-pane__header';
-        const heading = document.createElement('h2');
-        heading.textContent = selected[1].title;
-        const closeButton = this.actionButton({
-          label: '×',
-          action: 'close-preview',
-          title: this.instance.translate('closePreview'),
-        });
-        closeButton.setAttribute('aria-label', this.instance.translate('closePreview'));
-        header.append(heading, closeButton);
-        preview.append(header);
-        if (previews.length > 1) {
-          const tabs = document.createElement('div');
-          tabs.className = 'edy-pane__tabs';
-          for (const [id, view] of previews) {
-            tabs.append(this.actionButton({ label: view.title, action: 'open-view', id, pressed: id === selected[0] }));
-          }
-          preview.append(tabs);
-        }
-        const previewContent = document.createElement('div');
-        previewContent.className = 'edy-editor__preview-content';
-        if (selected[1].viewport) {
-          const config = selected[1].viewport;
-          let state = this.previewStates.get(selected[1]);
-          if (!state) {
-            state = { width: config.width, height: config.height, scale: config.scale };
-            this.previewStates.set(selected[1], state);
-          }
-          const viewport = createPreviewViewport({
-            config,
-            state,
-            translate: this.instance.translate,
-            onError: (error) => this.instance.reportError(error),
-          });
-          this.previewViewport = viewport;
-          editor.classList.add('has-viewport');
-          preview.classList.add('has-viewport');
-          this.renderContribution(viewport.target, selected[1]);
-          previewContent.append(viewport.element);
-        }
-        else {
-          this.renderContribution(previewContent, selected[1]);
-        }
-        preview.append(previewContent);
-        surfaces.append(preview);
-      }
-    }
-    editor.append(surfaces);
+    const content = document.createElement('div');
+    content.className = 'edy-editor__content';
+    this.renderEditorContent(content);
+    editor.append(content);
     return editor;
+  }
+
+  /**
+   * Builds the independent preview region.
+   * @param {Array<[string, Object]>} previews Registered preview views.
+   * @returns {HTMLElement} Preview region.
+   */
+  renderPreview(previews) {
+    const selected = previews.find(([id]) => id === this.activePreview) ?? previews[0];
+    if (!selected) {
+      return null;
+    }
+    this.activePreview = selected[0];
+    const preview = document.createElement('section');
+    preview.className = 'edy-preview';
+    preview.setAttribute('aria-label', selected[1].title);
+    const header = document.createElement('div');
+    header.className = 'edy-pane__header';
+    const heading = document.createElement('h2');
+    heading.textContent = selected[1].title;
+    const closeButton = this.actionButton({
+      label: '×',
+      action: 'close-preview',
+      title: this.instance.translate('closePreview'),
+    });
+    closeButton.setAttribute('aria-label', this.instance.translate('closePreview'));
+    header.append(heading, closeButton);
+    preview.append(header);
+    if (previews.length > 1) {
+      const tabs = document.createElement('div');
+      tabs.className = 'edy-pane__tabs';
+      for (const [id, view] of previews) {
+        tabs.append(this.actionButton({ label: view.title, action: 'open-view', id, pressed: id === selected[0] }));
+      }
+      preview.append(tabs);
+    }
+    const previewContent = document.createElement('div');
+    previewContent.className = 'edy-preview__content';
+    if (selected[1].viewport) {
+      const config = selected[1].viewport;
+      let state = this.previewStates.get(selected[1]);
+      if (!state) {
+        state = { width: config.width, height: config.height, scale: config.scale };
+        this.previewStates.set(selected[1], state);
+      }
+      const viewport = createPreviewViewport({
+        config,
+        state,
+        translate: this.instance.translate,
+        onError: (error) => this.instance.reportError(error),
+      });
+      this.previewViewport = viewport;
+      preview.classList.add('has-viewport');
+      this.renderContribution(viewport.target, selected[1]);
+      previewContent.append(viewport.element);
+    }
+    else {
+      this.renderContribution(previewContent, selected[1]);
+    }
+    preview.append(previewContent);
+    return preview;
   }
 
   /**
@@ -800,7 +822,7 @@ export class Workbench {
       return;
     }
     const existing = editor.querySelector('.edy-editor__tabs');
-    const content = editor.querySelector('.edy-editor__breadcrumbs') ?? editor.querySelector('.edy-editor__surfaces');
+    const content = editor.querySelector('.edy-editor__breadcrumbs') ?? editor.querySelector('.edy-editor__content');
     const tabs = this.renderEditorTabs();
     if (tabs.childElementCount) {
       if (existing) {
@@ -1129,6 +1151,10 @@ export class Workbench {
     }
     else if (action === 'toggle-preview') {
       this.previewVisible = !this.previewVisible;
+      this.render();
+    }
+    else if (action === 'toggle-editor-area') {
+      this.editorVisible = !this.editorVisible;
       this.render();
     }
     else if (action === 'close-preview') {

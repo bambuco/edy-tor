@@ -36,6 +36,8 @@ test('invalid initial workbench state is rejected before mounting', () => {
   for (const initialState of [
     { bottomPanel: { visible: 'false' } },
     { primarySidebar: { title: '  ' } },
+    { editor: { visible: 'false' } },
+    { editor: { title: 'Unsupported' } },
     { preview: { visible: 1 } },
     { showPanelVisibilityInMenu: 'false' },
   ]) {
@@ -97,6 +99,7 @@ test('custom stylesheets resolve per instance, report failures and are removed o
       container: container(),
       initialState: {
         bottomPanel: { visible: false, title: 'Console' },
+        editor: { visible: false },
         preview: { visible: true },
         showPanelVisibilityInMenu: false,
       },
@@ -105,7 +108,9 @@ test('custom stylesheets resolve per instance, report failures and are removed o
     assert.equal(second.customCss, 'https://example.test/theme.css');
     assert.equal(third.customCss, 'https://cdn.example.test/theme.css');
     assert.equal(fourth.customCss, undefined);
+    assert.equal(fourth.workbench.editorVisible, true);
     assert.equal(configured.workbench.panelVisible, false);
+    assert.equal(configured.workbench.editorVisible, false);
     assert.equal(configured.workbench.previewVisible, true);
     assert.equal(configured.workbench.instance.initialState.bottomPanel.title, 'Console');
     assert.equal(configured.workbench.instance.initialState.showPanelVisibilityInMenu, false);
@@ -139,6 +144,24 @@ test('custom stylesheets resolve per instance, report failures and are removed o
     Workbench.prototype.renderNotifications = previousRenderNotifications;
     console.error = previousError;
   }
+});
+
+test('editor-area visibility toggles independently from preview visibility', () => {
+  const workbench = Object.create(Workbench.prototype);
+  const button = {
+    dataset: { action: 'toggle-editor-area' },
+    setAttribute() {},
+  };
+  workbench.shadow = { contains: () => true };
+  workbench.editorVisible = true;
+  workbench.previewVisible = true;
+  let renders = 0;
+  workbench.render = () => renders++;
+
+  workbench.handleClick({ target: { closest: () => button } });
+  assert.equal(workbench.editorVisible, false);
+  assert.equal(workbench.previewVisible, true);
+  assert.equal(renders, 1);
 });
 
 test('theme is applied to both the workbench and the dialog host', () => {

@@ -7,6 +7,8 @@ and synchronization. `context.views.open('preview-id')` opens a registered
 preview programmatically. If several preview views are registered, users can
 select them in the preview pane.
 The editor and preview scroll independently, while editor tabs remain visible.
+The editor and preview have independent visibility controls. Hiding both leaves
+the central workspace empty without collapsing its layout area.
 
 ## Optional size and scale controls
 

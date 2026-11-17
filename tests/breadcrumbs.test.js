@@ -155,13 +155,13 @@ test('breadcrumb navigation renders icons, active location, focus and action fai
 test('tab refresh inserts tabs before breadcrumbs without replacing editor content', () => {
   const workbench = Object.create(Workbench.prototype);
   const nav = { name: 'breadcrumbs' };
-  const surfaces = { name: 'surfaces' };
+  const content = { name: 'content' };
   const tabs = { name: 'tabs', childElementCount: 1 };
   const editor = {
-    children: [nav, surfaces],
+    children: [nav, content],
     querySelector(selector) {
       if (selector === '.edy-editor__breadcrumbs') return nav;
-      if (selector === '.edy-editor__surfaces') return surfaces;
+      if (selector === '.edy-editor__content') return content;
       return null;
     },
     insertBefore(child, reference) { this.children.splice(this.children.indexOf(reference), 0, child); },
@@ -169,7 +169,7 @@ test('tab refresh inserts tabs before breadcrumbs without replacing editor conte
   workbench.layout = { querySelector: () => editor };
   workbench.renderEditorTabs = () => tabs;
   workbench.refreshDocumentTabs();
-  assert.deepEqual(editor.children, [tabs, nav, surfaces]);
+  assert.deepEqual(editor.children, [tabs, nav, content]);
 });
 
 test('editor places breadcrumbs first when there are no tabs', async () => {
@@ -188,7 +188,38 @@ test('editor places breadcrumbs first when there are no tabs', async () => {
     const editor = workbench.renderEditor();
     assert.equal(editor.children[0].className, 'edy-editor__breadcrumbs');
     assert.equal(editor.children[0].hidden, false);
-    assert.equal(editor.children[1].className, 'edy-editor__surfaces');
+    assert.equal(editor.children[1].className, 'edy-editor__content');
     assert.ok(editor.children[1] instanceof Element);
+  });
+});
+
+test('editor and preview render as separate sibling regions', async () => {
+  await withDocument(({ Element }) => {
+    const instance = createInstance();
+    const previewView = { title: 'Preview', location: 'preview' };
+    instance.views.entries = () => [['preview-id', previewView]];
+    const workbench = Object.create(Workbench.prototype);
+    workbench.instance = instance;
+    workbench.activePreview = null;
+    workbench.previewStates = new WeakMap();
+    workbench.renderEditorTabs = () => ({ childElementCount: 0 });
+    workbench.renderEditorContent = () => {};
+    workbench.renderBreadcrumbs = () => {};
+    workbench.actionButton = ({ label, action }) => {
+      const button = new Element('button');
+      button.textContent = label;
+      button.dataset.action = action;
+      return button;
+    };
+    workbench.renderContribution = (target) => target.append(new Element('content'));
+
+    const editor = workbench.renderEditor();
+    const preview = workbench.renderPreview(instance.views.entries());
+    const workspace = new Element('workspace');
+    workspace.append(editor, preview);
+
+    assert.deepEqual(workspace.children, [editor, preview]);
+    assert.equal(editor.children.some((child) => child.className === 'edy-preview'), false);
+    assert.equal(preview.className, 'edy-preview');
   });
 });

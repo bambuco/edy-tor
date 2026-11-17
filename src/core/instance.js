@@ -49,7 +49,7 @@ export function createEdy(options) {
  */
 function normalizeInitialState(initialState = {}) {
   const sections = ['primarySidebar', 'secondarySidebar', 'bottomPanel'];
-  const allowedKeys = new Set([...sections, 'preview', 'showPanelVisibilityInMenu']);
+  const allowedKeys = new Set([...sections, 'editor', 'preview', 'showPanelVisibilityInMenu']);
   if (!initialState || typeof initialState !== 'object' || Array.isArray(initialState) ||
       Object.keys(initialState).some((key) => !allowedKeys.has(key))) {
     throw new TypeError('initialState must be an object with supported workbench settings.');
@@ -84,6 +84,17 @@ function normalizeInitialState(initialState = {}) {
     }
     normalized.preview = Object.freeze({
       ...(preview.visible === undefined ? {} : { visible: preview.visible }),
+    });
+  }
+  const editor = initialState.editor;
+  if (editor !== undefined) {
+    if (!editor || typeof editor !== 'object' || Array.isArray(editor) ||
+        Object.keys(editor).some((key) => key !== 'visible') ||
+        (editor.visible !== undefined && typeof editor.visible !== 'boolean')) {
+      throw new TypeError('initialState.editor must contain only a boolean visible setting.');
+    }
+    normalized.editor = Object.freeze({
+      ...(editor.visible === undefined ? {} : { visible: editor.visible }),
     });
   }
   if (initialState.showPanelVisibilityInMenu !== undefined &&
