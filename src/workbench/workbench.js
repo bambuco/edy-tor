@@ -716,6 +716,7 @@ export class Workbench {
         this.disposeRenderResources();
       }
       this.refreshBreadcrumbs();
+      this.refreshDocumentTabs();
     }
   }
 
