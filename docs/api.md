@@ -57,9 +57,10 @@ its built-in styles. Each instance may use a different stylesheet.
 - `views.register(id, { title, location, icon, render, viewport })`, `open(id)`.
   Activity-bar `icon` accepts a character, a standard key such as `robot` or
   `card`, or direct Font Awesome classes such as `fa-solid fa-robot`.
-- `documents.open(id, { title, render })`, `close(id)`, `activate(id)`.
+- `documents.open(id, { title, icon, render })`, `close(id)`, `activate(id)`.
   `activate` returns `true` when the registered document was focused and
-  `false` when it does not exist.
+  `false` when it does not exist. Optional `icon` uses the same glyph, alias,
+  or direct Font Awesome classes as view icons and appears in the editor tab.
 - `breadcrumbs.set({ type, id }, items)`, `clear({ type, id })`.
 - `menus.register(menuId, { id, label, commandId, icon, shortcut, order })`.
   Menu and accordion `icon` values use the same aliases or direct Font Awesome
@@ -70,6 +71,10 @@ its built-in styles. Each instance may use a different stylesheet.
 - `ui.confirm(message)` returns a promise of a boolean.
 - `services`, `subscriptions`, `locale`, `translate`, `extensionId`,
   and `apiVersion`.
+
+`createTabs` accepts tab definitions with `{ id, label, icon }`. The optional
+`icon` uses the same icon formats as buttons and is rendered decoratively
+before the label.
 
 For renderers that attach listeners or own frames, return `{ element,
 dispose }`. Edy disposes the contribution when it is unmounted. A closed

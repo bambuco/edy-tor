@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { Workbench } from '../src/workbench/workbench.js';
 import { createEdy } from '../src/core/instance.js';
+import { createTabs } from '../src/ui/controls.js';
 
 test('invalid logo options are rejected before mounting', () => {
   const container = { attachShadow() {} };
@@ -43,6 +44,106 @@ test('invalid initial workbench state is rejected before mounting', () => {
   ]) {
     assert.throws(() => createEdy({ container, initialState }), /initialState\./);
   }
+});
+
+test('editor tabs render contribution and close icons inside one tab container', () => {
+  const previousDocument = globalThis.document;
+  class Element {
+    constructor(tag) {
+      this.tagName = tag;
+      this.children = [];
+      this.dataset = {};
+      this.attributes = {};
+      this.classes = new Set();
+      this.classList = {
+        add: (...names) => names.forEach((name) => this.classes.add(name)),
+      };
+    }
+    append(...elements) { this.children.push(...elements); }
+    prepend(element) { this.children.unshift(element); }
+    setAttribute(name, value) { this.attributes[name] = value; }
+  }
+  globalThis.document = { createElement: (tag) => new Element(tag) };
+  try {
+    const workbench = Object.create(Workbench.prototype);
+    workbench.instance = {
+      views: { entries: () => [['view', { title: 'View', icon: 'star', location: 'editor' }]] },
+      documents: { entries: () => [['document', { title: 'Page', icon: 'file' }]] },
+      translate: (key) => key,
+    };
+    workbench.activeEditorView = null;
+    workbench.activeDocument = 'document';
+    const tabs = workbench.renderEditorTabs();
+    const viewTab = tabs.children[0];
+    const documentTab = tabs.children[1];
+    assert.ok(viewTab.children[0].classes.has('fa-star'));
+    assert.equal(documentTab.className, 'edy-editor__tab');
+    assert.ok(documentTab.children[0].children[0].classes.has('fa-file'));
+    const close = documentTab.children[1];
+    assert.equal(close.textContent, '');
+    assert.ok(close.children[0].classes.has('fa-xmark'));
+    assert.equal(close.attributes['aria-label'], 'close Page');
+    assert.equal(close.title, 'close Page');
+  }
+  finally {
+    globalThis.document = previousDocument;
+  }
+});
+
+test('generic tabs accept decorative icons', () => {
+  const previousDocument = globalThis.document;
+  class Element {
+    constructor() {
+      this.children = [];
+      this.attributes = {};
+      this.dataset = {};
+      this.classes = new Set();
+      this.classList = {
+        add: (...names) => names.forEach((name) => this.classes.add(name)),
+      };
+    }
+    append(...elements) { this.children.push(...elements); }
+    prepend(element) { this.children.unshift(element); }
+    setAttribute(name, value) { this.attributes[name] = value; }
+    addEventListener() {}
+  }
+  globalThis.document = { createElement: () => new Element() };
+  try {
+    const tabs = createTabs([{ id: 'one', label: 'One', icon: 'star' }], 'one', () => {});
+    assert.ok(tabs.children[0].children[0].classes.has('fa-star'));
+    assert.equal(tabs.children[0].textContent, 'One');
+  }
+  finally {
+    globalThis.document = previousDocument;
+  }
+});
+
+test('editor tab arrow navigation finds tabs across their close wrappers', () => {
+  const workbench = Object.create(Workbench.prototype);
+  let defaultPrevented = false;
+  const focused = [];
+  const first = {
+    matches: (selector) => selector === '[role="tab"]',
+    closest: () => tablist,
+    focus() { focused.push('first'); },
+    click() {},
+  };
+  const second = {
+    focus() { focused.push('second'); },
+    click() {},
+  };
+  const tablist = { querySelectorAll: () => [first, second] };
+  workbench.instance = { menus: { entries: () => [] } };
+  workbench.handleKeydown({
+    target: first,
+    key: 'ArrowRight',
+    repeat: false,
+    isComposing: false,
+    defaultPrevented: false,
+    preventDefault() { defaultPrevented = true; },
+  });
+  assert.equal(defaultPrevented, true);
+  assert.deepEqual(focused, ['second']);
 });
 
 test('custom stylesheets resolve per instance, report failures and are removed on disposal', async () => {

@@ -59,9 +59,10 @@ its built-in styles. Each instance may use a different stylesheet.</p>
 <li><code>views.register(id, { title, location, icon, render, viewport })</code>, <code>open(id)</code>.
 Activity-bar <code>icon</code> accepts a character, a standard key such as <code>robot</code> or
 <code>card</code>, or direct Font Awesome classes such as <code>fa-solid fa-robot</code>.</li>
-<li><code>documents.open(id, { title, render })</code>, <code>close(id)</code>, <code>activate(id)</code>.
+<li><code>documents.open(id, { title, icon, render })</code>, <code>close(id)</code>, <code>activate(id)</code>.
 <code>activate</code> returns <code>true</code> when the registered document was focused and
-<code>false</code> when it does not exist.</li>
+<code>false</code> when it does not exist. Optional <code>icon</code> uses the same glyph, alias,
+or direct Font Awesome classes as view icons and appears in the editor tab.</li>
 <li><code>breadcrumbs.set({ type, id }, items)</code>, <code>clear({ type, id })</code>.</li>
 <li><code>menus.register(menuId, { id, label, commandId, icon, shortcut, order })</code>.
 Menu and accordion <code>icon</code> values use the same aliases or direct Font Awesome
@@ -73,6 +74,9 @@ Built-in groups include <code>file</code>, <code>edit</code>, <code>view</code>,
 <li><code>services</code>, <code>subscriptions</code>, <code>locale</code>, <code>translate</code>, <code>extensionId</code>,
 and <code>apiVersion</code>.</li>
 </ul>
+<p><code>createTabs</code> accepts tab definitions with <code>{ id, label, icon }</code>. The optional
+<code>icon</code> uses the same icon formats as buttons and is rendered decoratively
+before the label.</p>
 <p>For renderers that attach listeners or own frames, return <code>{ element, dispose }</code>. Edy disposes the contribution when it is unmounted. A closed
 document is removed; closing a sidebar or preview hides the surface.</p>
 <h3>Editor breadcrumbs</h3>

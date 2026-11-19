@@ -444,7 +444,7 @@ export class EdyInstance {
         register: (id, view) => {
           validIdentifier(id, 'Views');
           if (view?.icon !== undefined && resolveIcon(view.icon) === null) {
-            throw new TypeError('View icons must be a non-empty character or Bootstrap icon name.');
+            throw new TypeError('View icons must be a non-empty character or Font Awesome icon name.');
           }
           if (!view || typeof view.title !== 'string' || view.title.trim() === '' ||
               !['primary', 'secondary', 'panel', 'editor', 'preview'].includes(view.location) ||
@@ -472,6 +472,9 @@ export class EdyInstance {
       documents: Object.freeze({
         open: (id, document) => {
           validIdentifier(id, 'Documents');
+          if (document?.icon !== undefined && resolveIcon(document.icon) === null) {
+            throw new TypeError('Document icons must be a non-empty character or Font Awesome icon name.');
+          }
           if (!document || typeof document.title !== 'string' || document.title.trim() === '' ||
               (document.render !== undefined && typeof document.render !== 'function')) {
             throw new TypeError('Documents require a title and optional render function.');

@@ -1305,7 +1305,7 @@ export function createList(items, { tree = false, onSelect, nested = false } = {
 
 /**
  * Creates a tab strip that notifies consumers when selection changes.
- * @param {Array<{id: string, label: string}>} tabs Tab definitions.
+ * @param {Array<{id: string, label: string, icon?: string}>} tabs Tab definitions.
  * @param {string} selectedId Initially selected tab.
  * @param {Function} onSelect Selection callback.
  * @returns {HTMLElement} Accessible tab list.
@@ -1317,6 +1317,7 @@ export function createTabs(tabs, selectedId, onSelect) {
   for (const tab of tabs) {
     const button = createButton({
       label: tab.label,
+      icon: tab.icon,
       onClick: (event) => {
         for (const candidate of list.querySelectorAll('[role="tab"]')) {
           candidate.setAttribute('aria-selected', String(candidate === event.currentTarget));

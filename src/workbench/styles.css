@@ -529,6 +529,7 @@ iframe:focus-visible {
 
 .edy-pane__tabs,
 .edy-editor__tabs {
+  display: flex;
   padding: 4px;
   overflow-x: auto;
   border-bottom: 1px solid var(--edy-color-border);
@@ -536,8 +537,25 @@ iframe:focus-visible {
 
 .edy-editor__tab {
   display: inline-flex;
+  flex: none;
   align-items: center;
-  gap: 2px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+}
+
+.edy-editor__tab:hover,
+.edy-editor__tab:focus-within,
+.edy-editor__tab:has([aria-selected="true"]) {
+  background: color-mix(in srgb, var(--edy-color-accent) 15%, transparent);
+}
+
+.edy-editor__tab > .edy-button {
+  border: 0;
+  border-radius: 3px 0 0 3px;
+}
+
+.edy-editor__tab > [data-action="close-document"] {
+  border-radius: 0 3px 3px 0;
 }
 
 .edy-editor__tabs {
@@ -597,7 +615,11 @@ iframe:focus-visible {
 
 .edy-editor__tab [data-action="close-document"] {
   min-width: 24px;
-  padding-inline: 5px;
+  padding-inline: 6px;
+}
+
+.edy-editor__tab [data-action="close-document"] .edy-icon {
+  margin: 0;
 }
 
 .edy-pane__content,

@@ -74,6 +74,8 @@ test('closed documents discard paths and reopened documents start with an empty 
   context.documents.close('page');
   assert.equal(instance.breadcrumbs.document.size, 0);
   assert.throws(() => context.breadcrumbs.set(target, path), /not registered/);
+  context.documents.close('page');
+  assert.throws(() => context.documents.open('page', { title: 'Page', icon: null }), /Document icons/);
   context.documents.open('page', { title: 'New page' });
   assert.equal(instance.breadcrumbs.document.size, 0);
 });

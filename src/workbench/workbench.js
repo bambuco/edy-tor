@@ -597,15 +597,22 @@ export class Workbench {
     const editorViews = this.instance.views.entries().filter(([, view]) => view.location === 'editor');
     const documents = this.instance.documents.entries();
     for (const [id, view] of editorViews) {
-      tabs.append(this.tabButton(id, view.title, this.activeEditorView === id, 'open-editor-view'));
+      tabs.append(this.tabButton(id, view.title, this.activeEditorView === id, 'open-editor-view', view.icon));
     }
     for (const [id, documentItem] of documents) {
       const wrapper = document.createElement('div');
       wrapper.className = 'edy-editor__tab';
       wrapper.setAttribute('role', 'presentation');
-      wrapper.append(this.tabButton(id, documentItem.title, this.activeDocument === id, 'open-document'));
+      wrapper.append(this.tabButton(
+        id,
+        documentItem.title,
+        this.activeDocument === id,
+        'open-document',
+        documentItem.icon,
+      ));
       const close = this.actionButton({
-        label: this.instance.translate('close'),
+        label: '',
+        icon: 'xmark',
         action: 'close-document',
         id,
         title: `${this.instance.translate('close')} ${documentItem.title}`,
@@ -995,11 +1002,11 @@ export class Workbench {
 
   /**
    * Creates a button with safe data attributes for delegated event handling.
-   * @param {{label: string, action: string, id?: string, title?: string, pressed?: boolean, expanded?: boolean}} options Button data.
+   * @param {{label: string, action: string, id?: string, icon?: string, title?: string, pressed?: boolean, expanded?: boolean}} options Button data.
    * @returns {HTMLButtonElement} Button element.
    */
-  actionButton({ label, action, id, title, pressed, expanded, disabled = false }) {
-    const button = createButton({ label, disabled });
+  actionButton({ label, action, id, icon, title, pressed, expanded, disabled = false }) {
+    const button = createButton({ label, icon, disabled });
     button.dataset.action = action;
     if (id !== undefined) {
       button.dataset.id = id;
@@ -1022,10 +1029,11 @@ export class Workbench {
    * @param {string} label Tab label.
    * @param {boolean} selected Whether the tab is selected.
    * @param {string} action Event action.
+   * @param {string} [icon] Decorative tab icon.
    * @returns {HTMLButtonElement} Tab button.
    */
-  tabButton(id, label, selected, action) {
-    const button = this.actionButton({ label, action, id });
+  tabButton(id, label, selected, action, icon) {
+    const button = this.actionButton({ label, icon, action, id });
     button.setAttribute('role', 'tab');
     button.setAttribute('aria-selected', String(selected));
     button.tabIndex = selected ? 0 : -1;
@@ -1384,7 +1392,9 @@ export class Workbench {
     }
     if (event.target.matches?.('[role="tab"]') &&
         ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
-      const tabs = [...event.target.parentElement.querySelectorAll('[role="tab"]')];
+      const tablist = event.target.closest?.('[role="tablist"]');
+      const tabs = [...tablist?.querySelectorAll('[role="tab"]') ?? []];
+      if (!tabs.length) return;
       const index = tabs.indexOf(event.target);
       const next = event.key === 'Home' ? 0
         : event.key === 'End' ? tabs.length - 1

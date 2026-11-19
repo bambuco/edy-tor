@@ -402,6 +402,7 @@ export const demoExtension = {
     });
     context.documents.open('sample-document', {
       title: t('sampleItem'),
+      icon: 'file',
       render: () => {
         const content = document.createElement('article');
         const heading = document.createElement('h1');
