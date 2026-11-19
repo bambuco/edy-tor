@@ -121,6 +121,7 @@ standard fields, plus the <code>input-select</code>, <code>icon</code>, <code>ti
 <pre><code class="language-js">createForm({
   translate: context.translate,
   onError: (error) =&gt; context.notifications.error(error),
+  compact: true,
   fields: [
     { name: &#39;icon&#39;, label: &#39;Icon&#39;, type: &#39;icon&#39;, value: &#39;star&#39;, options: [
       { value: &#39;star&#39;, label: &#39;Star&#39; },
@@ -130,6 +131,18 @@ standard fields, plus the <code>input-select</code>, <code>icon</code>, <code>ti
   onSubmit: ({ icon, content }) =&gt; console.log(icon, content),
 });
 </code></pre>
+<p>Pass <code>compact: true</code> for dense property forms. The option must be boolean and
+defaults to <code>false</code>. Compact forms use aligned label/control rows, reduced
+padding and compact groups. They stack responsively when the available width is
+too small. Text, number, date, select, combined input/select and switch fields
+are arranged horizontally; rich editors, tables, sortable lists, assets, radio
+groups and icon galleries keep their vertical layout.</p>
+<p>In compact forms, field help is represented by a keyboard-focusable question
+mark. Its text appears as a tooltip on hover or focus while retaining
+<code>aria-describedby</code>. The text expands within the form so it is not clipped by
+scrollable panels. Validation errors remain
+visible as text, are announced through the form&#39;s live regions, and additionally
+mark invalid controls with the danger border color.</p>
 <p><code>input-select</code> combines a text or number input with an adjacent select. Use
 <code>inputType: &#39;text&#39;</code> (the default) or <code>inputType: &#39;number&#39;</code>, and provide
 non-empty, uniquely valued options. <code>selectLabel</code> supplies the list&#39;s accessible

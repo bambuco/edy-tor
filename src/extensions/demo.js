@@ -138,10 +138,34 @@ export const demoExtension = {
         const content = document.createElement('section');
         const heading = document.createElement('h2');
         heading.textContent = t('properties');
-        const description = document.createElement('p');
-        description.textContent = t('nameHelp');
-        content.append(heading, description);
-        return content;
+        const form = createForm({
+          compact: true,
+          translate: t,
+          onError: (error) => context.notifications.error(error),
+          fields: [
+            {
+              name: 'property-name',
+              label: t('name'),
+              required: true,
+              help: t('nameHelp'),
+            },
+            { name: 'property-count', label: t('count'), type: 'number', min: 0, value: 1 },
+            {
+              name: 'property-kind',
+              label: t('type'),
+              type: 'select',
+              options: [
+                { value: 'sample', label: t('sampleItem') },
+                { value: 'document', label: t('editorTabs') },
+              ],
+            },
+            { name: 'property-enabled', label: t('enabled'), type: 'switch', value: true },
+            { name: 'property-color', label: t('color'), type: 'color', value: '#286bc1' },
+          ],
+          onSubmit: () => context.notifications.success(t('formApplied')),
+        });
+        content.append(heading, form);
+        return { element: content, dispose: () => form.dispose() };
       },
     });
     context.views.register('output', {

@@ -132,6 +132,7 @@ standard fields, plus the `input-select`, `icon`, `tinymce`, `codemirror`,
 createForm({
   translate: context.translate,
   onError: (error) => context.notifications.error(error),
+  compact: true,
   fields: [
     { name: 'icon', label: 'Icon', type: 'icon', value: 'star', options: [
       { value: 'star', label: 'Star' },
@@ -141,6 +142,20 @@ createForm({
   onSubmit: ({ icon, content }) => console.log(icon, content),
 });
 ```
+
+Pass `compact: true` for dense property forms. The option must be boolean and
+defaults to `false`. Compact forms use aligned label/control rows, reduced
+padding and compact groups. They stack responsively when the available width is
+too small. Text, number, date, select, combined input/select and switch fields
+are arranged horizontally; rich editors, tables, sortable lists, assets, radio
+groups and icon galleries keep their vertical layout.
+
+In compact forms, field help is represented by a keyboard-focusable question
+mark. Its text appears as a tooltip on hover or focus while retaining
+`aria-describedby`. The text expands within the form so it is not clipped by
+scrollable panels. Validation errors remain
+visible as text, are announced through the form's live regions, and additionally
+mark invalid controls with the danger border color.
 
 `input-select` combines a text or number input with an adjacent select. Use
 `inputType: 'text'` (the default) or `inputType: 'number'`, and provide

@@ -216,12 +216,15 @@ const formIcons = {
 
 /**
  * Builds a validated form from a declarative field schema.
- * @param {{fields: Array, onSubmit: Function, onCancel?: Function, translate: Function, onError?: Function}} options Form options.
+ * @param {{fields: Array, onSubmit: Function, onCancel?: Function, translate: Function, onError?: Function, compact?: boolean}} options Form options.
  * @returns {HTMLFormElement & {dispose: Function}} Accessible form with disposal.
  */
-export function createForm({ fields, onSubmit, onCancel, translate, onError = console.error }) {
+export function createForm({ fields, onSubmit, onCancel, translate, onError = console.error, compact = false }) {
+  if (typeof compact !== 'boolean') {
+    throw new TypeError('Form compact option must be a boolean.');
+  }
   const form = document.createElement('form');
-  form.className = 'edy-form';
+  form.className = `edy-form${compact ? ' edy-form--compact' : ''}`;
   form.noValidate = true;
   const formId = `edy-form-${++controlSequence}`;
   const controls = new Map();
@@ -231,8 +234,24 @@ export function createForm({ fields, onSubmit, onCancel, translate, onError = co
     'textarea', 'select', 'input-select', 'checkbox', 'radio', 'switch',
     'tinymce', 'codemirror', 'icon', 'sortable', 'table', 'asset',
   ]);
+  const compactRowTypes = new Set([
+    'text', 'search', 'email', 'url', 'tel', 'password', 'number', 'range',
+    'date', 'time', 'datetime-local', 'month', 'week', 'color',
+    'select', 'input-select', 'checkbox', 'switch',
+  ]);
   let disposed = false;
   const definitions = [];
+  const appendHelp = (wrapper, help) => {
+    wrapper.append(help);
+    if (compact) {
+      help.tabIndex = 0;
+      const tooltip = document.createElement('span');
+      tooltip.className = 'edy-form__help-tooltip';
+      tooltip.textContent = help.textContent;
+      tooltip.setAttribute('aria-hidden', 'true');
+      wrapper.append(tooltip);
+    }
+  };
   for (const field of fields) {
     if (field?.type !== 'group') {
       definitions.push({ field, container: form, group: null });
@@ -265,6 +284,9 @@ export function createForm({ fields, onSubmit, onCancel, translate, onError = co
     }
     let wrapper = document.createElement('div');
     wrapper.className = 'edy-form__field';
+    if (compact && compactRowTypes.has(field.type ?? 'text')) {
+      wrapper.className += ' edy-form__field--compact-row';
+    }
     const inputId = `${formId}-${field.name}`;
 
     let input;
@@ -291,7 +313,8 @@ export function createForm({ fields, onSubmit, onCancel, translate, onError = co
             (typeof field.selectLabel !== 'string' || !field.selectLabel.trim()))) {
         throw new TypeError(`Input-select field "${field.name}" requires text or number input, unique options, and valid initial values.`);
       }
-      wrapper.className = 'edy-form__field edy-form__field--input-select';
+      wrapper.className = 'edy-form__field edy-form__field--input-select' +
+        (compact ? ' edy-form__field--compact-row' : '');
       const label = document.createElement('label');
       label.htmlFor = inputId;
       label.textContent = field.label ?? translate(field.name);
@@ -335,7 +358,7 @@ export function createForm({ fields, onSubmit, onCancel, translate, onError = co
         help.id = `${inputId}-help`;
         help.textContent = field.help;
         for (const control of [input, select]) control.setAttribute('aria-describedby', help.id);
-        wrapper.append(help);
+        appendHelp(wrapper, help);
       }
       wrapper.append(error);
       container.append(wrapper);
@@ -388,7 +411,7 @@ export function createForm({ fields, onSubmit, onCancel, translate, onError = co
         help.id = `${inputId}-help`;
         help.textContent = field.help;
         wrapper.setAttribute('aria-describedby', help.id);
-        wrapper.append(help);
+        appendHelp(wrapper, help);
       }
       actions.append(choose, clear);
       wrapper.append(actions, error);
@@ -594,7 +617,7 @@ export function createForm({ fields, onSubmit, onCancel, translate, onError = co
         help.id = `${inputId}-help`;
         help.textContent = field.help;
         wrapper.setAttribute('aria-describedby', help.id);
-        wrapper.append(help);
+        appendHelp(wrapper, help);
       }
       wrapper.append(add, error);
       container.append(wrapper);
@@ -703,7 +726,7 @@ export function createForm({ fields, onSubmit, onCancel, translate, onError = co
         help.id = `${inputId}-help`;
         help.textContent = field.help;
         wrapper.setAttribute('aria-describedby', help.id);
-        wrapper.append(help);
+        appendHelp(wrapper, help);
       }
       wrapper.append(add, error);
       container.append(wrapper);
@@ -835,7 +858,7 @@ export function createForm({ fields, onSubmit, onCancel, translate, onError = co
         help.id = `${inputId}-help`;
         help.textContent = field.help;
         wrapper.setAttribute('aria-describedby', help.id);
-        wrapper.append(help);
+        appendHelp(wrapper, help);
       }
       wrapper.append(error);
       container.append(wrapper);
@@ -879,7 +902,8 @@ export function createForm({ fields, onSubmit, onCancel, translate, onError = co
     label.textContent = field.label ?? translate(field.name);
     const isToggle = field.type === 'checkbox' || field.type === 'switch';
     if (isToggle) {
-      wrapper.className = 'edy-form__field edy-form__field--switch';
+      wrapper.className = 'edy-form__field edy-form__field--switch' +
+        (compact ? ' edy-form__field--compact-row' : '');
       const toggle = document.createElement('div');
       toggle.className = 'edy-form__switch';
       toggle.append(input, label);
@@ -894,8 +918,8 @@ export function createForm({ fields, onSubmit, onCancel, translate, onError = co
       help.id = `${inputId}-help`;
       help.textContent = field.help;
       input.setAttribute('aria-describedby', help.id);
-      if (isToggle) wrapper.append(help);
-      else wrapper.append(input, help);
+      if (!isToggle) wrapper.append(input);
+      appendHelp(wrapper, help);
     }
     else if (!isToggle) {
       wrapper.append(input);

@@ -374,3 +374,74 @@ test('field hidden CSS overrides its display rules', async () => {
   assert.match(css, /\.edy-form__input-select\s*\{\s*display:\s*grid;/);
   assert.match(css, /grid-template-columns:\s*minmax\(0, 1fr\) minmax\(110px, max-content\)/);
 });
+
+test('forms support compact rows with focusable help without changing values or validation', () => {
+  withDocument(({ nodes, focused }) => {
+    const submitted = [];
+    const form = createForm({
+      compact: true,
+      translate: (key) => key,
+      fields: [
+        { name: 'name', label: 'Name', required: true, help: 'Enter a name' },
+        { name: 'notes', type: 'textarea', help: 'Longer notes' },
+      ],
+      onSubmit: (values) => submitted.push(values),
+    });
+    assert.equal(form.className, 'edy-form edy-form--compact');
+    const name = nodes.find((node) => node.name === 'name');
+    const help = nodes.find((node) => node.className === 'edy-form__help');
+    const row = nodes.find((node) => node.className === 'edy-form__field edy-form__field--compact-row');
+    const tooltip = nodes.find((node) => node.className === 'edy-form__help-tooltip');
+    assert.ok(row);
+    assert.equal(row.children[row.children.indexOf(help) + 1], tooltip);
+    assert.equal(tooltip.textContent, 'Enter a name');
+    assert.equal(tooltip.attributes['aria-hidden'], 'true');
+    assert.equal(help.title, undefined);
+    assert.equal(help.tabIndex, 0);
+    assert.equal(name.attributes['aria-describedby'], help.id);
+
+    form.fire('submit');
+    assert.equal(focused(), name);
+    assert.equal(name.attributes['aria-invalid'], 'true');
+    name.value = 'Edy';
+    name.fire('input');
+    form.fire('submit');
+    assert.deepEqual(submitted, [{ name: 'Edy', notes: '' }]);
+    assert.throws(() => createForm({
+      compact: 'yes',
+      translate: (key) => key,
+      onSubmit() {},
+      fields: [],
+    }), /must be a boolean/);
+  });
+});
+
+test('compact composite help remains associated with both inputs and normal help stays inline', () => {
+  withDocument(({ nodes }) => {
+    const fields = [{ type: 'group', label: 'Measures', fields: [{
+      name: 'weight', type: 'input-select', help: 'Choose a value and unit',
+      options: [{ value: 'kg', label: 'Kilograms' }],
+    }] }];
+    createForm({ compact: true, fields, translate: (key) => key, onSubmit() {} });
+    const input = nodes.find((node) => node.name === 'weight');
+    const select = nodes.find((node) => node.name === 'weight-selected');
+    const help = nodes.find((node) => node.className === 'edy-form__help');
+    const tooltip = nodes.find((node) => node.className === 'edy-form__help-tooltip');
+    assert.equal(input.attributes['aria-describedby'], help.id);
+    assert.equal(select.attributes['aria-describedby'], help.id);
+    assert.equal(tooltip.textContent, help.textContent);
+
+    const previousCount = nodes.filter((node) => node.className === 'edy-form__help-tooltip').length;
+    createForm({ fields, translate: (key) => key, onSubmit() {} });
+    assert.equal(nodes.filter((node) => node.className === 'edy-form__help-tooltip').length, previousCount);
+    assert.equal(nodes.filter((node) => node.className === 'edy-form__help').at(-1).tabIndex, undefined);
+  });
+});
+
+test('compact form CSS includes tooltip, invalid borders and responsive rows', async () => {
+  const css = await readFile(new URL('../src/workbench/styles.css', import.meta.url), 'utf8');
+  assert.match(css, /\.edy-form--compact \.edy-form__field--compact-row\s*\{[\s\S]*grid-template-columns:/);
+  assert.match(css, /\.edy-form--compact \.edy-form__help:focus/);
+  assert.match(css, /input\[aria-invalid="true"\][\s\S]*border-color:\s*var\(--edy-color-danger\)/);
+  assert.match(css, /@media \(max-width: 560px\)[\s\S]*edy-form__field--compact-row/);
+});
